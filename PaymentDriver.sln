@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Payments", "Payments", "{98C4FF32-1931-438E-A3D5-9DE3AADD645C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Loader", "Loader", "{7815AF76-94CE-4F66-9377-AC9F0EA3097D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Driver", "Driver", "{7E2BCE3B-3325-4512-A858-326509F55244}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "payment_ecrutilatl", "Payment\Loader\payment_ecrutilatl\payment_ecrutilatl.csproj", "{C8629D37-A577-43AE-A372-4725B1EA8BA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uk_barclays_ecrutilatl", "Payment\Driver\uk_barclays_ecrutilatl\uk_barclays_ecrutilatl.csproj", "{58C70BE9-DACB-442A-8A89-CF76F19A40AF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Acrelec.Mockingbird.Core", "Acrelec.Mockingbird.Core", "{E9C8B966-F74A-443E-BFEE-93C6EE23F4BE}"
+	ProjectSection(SolutionItems) = preProject
+		Acrelec.Mockingbird.Core\Acrelec.Library.Logger.dll = Acrelec.Mockingbird.Core\Acrelec.Library.Logger.dll
+		Acrelec.Mockingbird.Core\Mockingbird.Feather.dll = Acrelec.Mockingbird.Core\Mockingbird.Feather.dll
+		Acrelec.Mockingbird.Core\Mockingbird.Interfaces.dll = Acrelec.Mockingbird.Core\Mockingbird.Interfaces.dll
+		Acrelec.Mockingbird.Core\Newtonsoft.Json.dll = Acrelec.Mockingbird.Core\Newtonsoft.Json.dll
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ECRUtilATL Libraries", "ECRUtilATL Libraries", "{309D8C3D-728C-40F5-8ED5-A926E82A5394}"
+	ProjectSection(SolutionItems) = preProject
+		ComConcert Libraries\com.ingenico.cli.comconcert.dll = ComConcert Libraries\com.ingenico.cli.comconcert.dll
+		ECRUtilATL Libraries\ECRUtilATL.dll = ECRUtilATL Libraries\ECRUtilATL.dll
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C8629D37-A577-43AE-A372-4725B1EA8BA7}.Debug|x86.ActiveCfg = Debug|x86
+		{C8629D37-A577-43AE-A372-4725B1EA8BA7}.Debug|x86.Build.0 = Debug|x86
+		{C8629D37-A577-43AE-A372-4725B1EA8BA7}.Release|x86.ActiveCfg = Release|x86
+		{C8629D37-A577-43AE-A372-4725B1EA8BA7}.Release|x86.Build.0 = Release|x86
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Debug|x86.ActiveCfg = Debug|x86
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Debug|x86.Build.0 = Debug|x86
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Release|x86.ActiveCfg = Release|x86
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7815AF76-94CE-4F66-9377-AC9F0EA3097D} = {98C4FF32-1931-438E-A3D5-9DE3AADD645C}
+		{7E2BCE3B-3325-4512-A858-326509F55244} = {98C4FF32-1931-438E-A3D5-9DE3AADD645C}
+		{C8629D37-A577-43AE-A372-4725B1EA8BA7} = {7815AF76-94CE-4F66-9377-AC9F0EA3097D}
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF} = {7E2BCE3B-3325-4512-A858-326509F55244}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {94FC7855-F963-4BAB-B69E-D035C6CC39BB}
+	EndGlobalSection
+EndGlobal
