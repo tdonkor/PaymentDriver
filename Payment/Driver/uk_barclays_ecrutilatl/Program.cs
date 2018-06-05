@@ -13,7 +13,7 @@ namespace Acrelec.Mockingbird.Payment
     {
         public static ManualResetEvent ManualResetEvent = new ManualResetEvent(false);
 
-        public const string NAME = "UK_GLOBALPAYMENTS_COMCONCERT";
+        public const string NAME = "UK_BARCLAYS_ECRUTILATL";
 
         private static void Main(string[] args)
         {

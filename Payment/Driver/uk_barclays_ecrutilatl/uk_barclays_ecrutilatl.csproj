@@ -85,7 +85,9 @@
     <Compile Include="Contracts\PaymentData.cs" />
     <Compile Include="Contracts\Result.cs" />
     <Compile Include="Contracts\ResultCode.cs" />
+    <Compile Include="ECRUtilATLApi.cs" />
     <Compile Include="ExtensionMethods\AssemblyExtensions.cs" />
+    <Compile Include="GetTerminalStatus.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="PaymentService.cs" />
     <Compile Include="Heartbeat.cs" />
@@ -94,6 +96,7 @@
     <Compile Include="Settlement\SettlementListener.cs" />
     <Compile Include="Settlement\SettlementWorker.cs" />
     <Compile Include="TransactionInfo.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
