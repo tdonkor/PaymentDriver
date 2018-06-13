@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Acrelec.Library.Logger;
 
 namespace Acrelec.Mockingbird.Payment
 {
@@ -12,6 +13,13 @@ namespace Acrelec.Mockingbird.Payment
         TXN_RECEIPT_ENABLED = 1,
     }
 
+    public enum CancellationState : ushort
+    {
+        CANCELLATION_ERROR = 0,
+        NOT_IN_TRANSACTION = 1,
+        CANNOT_BE_CANCELLED = 2,
+        MARKED_FOR_CANCELLATION = 3,
+    }
     public enum TransactionType : ushort
     {
         Sale = 0,
@@ -54,6 +62,26 @@ namespace Acrelec.Mockingbird.Payment
         MARKED_FOR_CANCELLATION = 3,
     }
 
+    public enum ECRUtilATLErrMsg
+    {
+        OK = 0,
+        UnableToConnect = 1,
+        UnableToSendRequest = 2,
+        BadRequestFormat = 3,
+        ReceptionTimeout = 4,
+        ReceptionError = 5,
+        BadResponseFormat = 6,
+        BadResponseSize = 7,
+        PEDNotAuthenticated = 8,
+        UknownValue = 9
+    }
+    public enum TransactiontResult
+    {
+        Successful = 48,
+        Cancelled = 54,
+        Failed = 55,
+        RequestReceived = 57
+    }
     public struct TransactionRequest
     {
         public string MessageNumber;
@@ -114,10 +142,22 @@ namespace Acrelec.Mockingbird.Payment
         public string ICCAppFileName;
         public string ICCAppPreferredName;
         public string TransactionId;
+        public string NonECRUtilATLData;
     }
 
     class Utils
     {
+        public static int GetNumericAmountValue(int amount)
+        {
+
+            if (amount <= 0)
+            {
+                Log.Error("Invalid pay amount");
+                amount = 0;
+            }
+
+            return amount;
+        }
 
         /// <summary>
         /// Get the name of Transaction
@@ -165,6 +205,8 @@ namespace Acrelec.Mockingbird.Payment
 
             return ReqResult[num];
         }
+
+
 
         /// <summary>
         /// Get the Transaction Status String
@@ -231,6 +273,33 @@ namespace Acrelec.Mockingbird.Payment
                 case 3: result = "Inserted"; break;
                 case 4: result = "Waved"; break;
                 case 5: result = "Keyed not present"; break;
+            }
+            return result;
+        }
+
+        public static TransactiontResult GetTransactionOutResult(string transactionStatusOut)
+        {
+            TransactiontResult result;
+
+            switch (transactionStatusOut)
+            {
+                case "0":
+                    result = TransactiontResult.Successful;
+                    break;
+                case "1":
+                case "2":
+                case "3":
+                case "4":
+                case "5":
+                case "6":
+                    result = TransactiontResult.Failed;
+                    break;
+                case "7":
+                    result = TransactiontResult.Cancelled;
+                    break;
+                default:
+                    result = TransactiontResult.RequestReceived;
+                    break;
             }
             return result;
         }

@@ -12,6 +12,6 @@ namespace Acrelec.Mockingbird.Payment
 
         public const string LOG_FILE = "Payment_uk_barclays_ecrutilatl";
 
-        public const string DRIVER_PATH = @"C:\Acrelec\Core\Peripherals\Payments\Drivers\pay_barclays_ecrutilatl\PAY_UK_BARCLAYS_ECRUTILATL.exe";
+        public const string DRIVER_PATH = @"C:\Acrelec\Core\Peripherals\Payments\Drivers\pay_uk_barclays_ecrutilatl\PAY_UK_BARCLAYS_ECRUTILATL.exe";
     }
 }

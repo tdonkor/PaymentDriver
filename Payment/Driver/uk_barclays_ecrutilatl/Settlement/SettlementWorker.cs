@@ -1,5 +1,5 @@
 ﻿using Acrelec.Library.Logger;
-using com.ingenico.cli.comconcert;
+//using com.ingenico.cli.comconcert;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -63,24 +63,25 @@ namespace Acrelec.Mockingbird.Payment.Settlement
             return Enumerable.Concat(outFiles, logFiles).ToDictionary(_ => _.Key, _ => _.Value);
         }
 
+
         private static void ExecuteSettlement()
         {
-            using (var api = new ComConcertApi())
+            using (var api = new ECRUtilATLApi())
             {
                 var config = RuntimeConfiguration.Instance;
 
-                api.Connect(config.Port);
+                api.Connect();
 
                 Log.Info("Executing auto settlement...");
-                var result = api.EndOfDayReport(120000, out var response);
-                if (result != COMConcertLibrary.ConcertErrMsg.None)
+                var result = api.EndOfDayReport(0, out var response);
+                if (result != ECRUtilATLErrMsg.OK)
                 {
                     Log.Info($"Error executing settlement: {result}");
                 }
                 else
                 {
                     Log.Info("Auto settlement executed.");
-                    PersistReport(response.nonConcertData);
+                    PersistReport(response.NonECRUtilATLData);
                 }
             }
         }

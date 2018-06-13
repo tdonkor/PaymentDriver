@@ -1,7 +1,7 @@
 ﻿using Acrelec.Library.Logger;
 using Acrelec.Mockingbird.Payment.Configuration;
 using Acrelec.Mockingbird.Payment.Contracts;
-using com.ingenico.cli.comconcert;
+//using com.ingenico.cli.comconcert;
 using System;
 using System.IO;
 using System.Linq;
@@ -40,20 +40,14 @@ namespace Acrelec.Mockingbird.Payment
                     return ResultCode.GenericError;
                 }
 
-                using (var api = new ComConcertApi())
+                using (var api = new ECRUtilATLApi())
                 {
-                    var connectResult = api.Connect(configuration.Port);
-                    if (connectResult != COMConcertLibrary.ConcertErrMsg.None)
-                    {
-                        Log.Debug($"Connect result: {connectResult}");
-                        return ResultCode.GenericError;
-                    }
+                    var connectResult = api.Connect();
+                    Log.Info($"Connect Result: {connectResult}");
 
-                    var disconnectResult = api.Disconnect();
-                    if (disconnectResult != COMConcertLibrary.ConcertErrMsg.None)
+                    if (connectResult != ECRUtilATLErrMsg.OK)
                     {
-                        Log.Debug($"Disconnect result: {disconnectResult}");
-                        return ResultCode.GenericError;
+                        return new Result<PaymentData>((ResultCode)connectResult);
                     }
 
                     RuntimeConfiguration.Instance = configuration;
@@ -93,6 +87,7 @@ namespace Acrelec.Mockingbird.Payment
         public Result<PaymentData> Pay(int amount)
         {
             Log.Info("Pay method started...");
+            Log.Info($"Amount = {amount}.");
 
             try
             {
@@ -113,41 +108,48 @@ namespace Acrelec.Mockingbird.Payment
 
                 Log.Info("Calling payment driver...");
 
-                using (var api = new ComConcertApi())
+                using (var api = new ECRUtilATLApi())
                 {
-                    var connectResult = api.Connect(config.Port);
+                    var connectResult = api.Connect();
                     Log.Info($"Connect Result: {connectResult}");
-                    if (connectResult != COMConcertLibrary.ConcertErrMsg.None)
+
+                    if (connectResult != ECRUtilATLErrMsg.OK)
                     {
                         return new Result<PaymentData>((ResultCode)connectResult);
                     }
 
-                    var payResult = api.Pay(amount, 120000, config.ForceOnline, out var payResponse);
+                    var payResult = api.Pay(amount, out var payResponse);
                     Log.Info($"Pay Result: {payResult}");
-                    Log.Info($"Pay Response Data: {payResponse.responseData}");
-                    if (payResult != COMConcertLibrary.ConcertErrMsg.None)
+                    Log.Info($"Pay Response Data: {payResponse.TransactionStatus}");
+
+                    if (payResult != ECRUtilATLErrMsg.OK)
                     {
-                        return new Result<PaymentData>((ResultCode)payResult);
+                        return new Result<PaymentData>((ResultCode)connectResult);
                     }
-
-                    data.Result = (PaymentResult) payResponse.getTransactionStatus();
+                    data.Result = (PaymentResult)Utils.GetTransactionOutResult(payResponse.TransactionStatus);
                     data.PaidAmount = amount;
-
                     XNode ticketDocument = null;
-                    var ticketResult = api.Ticket(120000, out var ticketResponse);
+                    var ticketResult = api.Ticket(amount, out var ticketResponse);
                     Log.Info($"Ticket Result: {ticketResult}");
-                    if (ticketResult == COMConcertLibrary.ConcertErrMsg.None)
+                    
+                    //TEST
+                    ticketResponse.NonECRUtilATLData = "transaction";
+
+                    if (ticketResult == ECRUtilATLErrMsg.OK)
                     {
-                        if (ticketResponse.getTransactionStatus() != COMConcertLibrary.ConcertTxnStatus.TxnCancelled)
+                        Log.Info($"transaction status: {ticketResponse.TransactionStatus}");
+                        if (Utils.GetTransactionOutResult(ticketResponse.TransactionStatus) != TransactiontResult.Cancelled)
                         {
-                            ticketDocument = XDocument.Parse(ticketResponse.nonConcertData);
+                            ticketDocument = XDocument.Parse(ticketResponse.NonECRUtilATLData);
 
                             var transactionInfo = RetrieveInfo(ticketDocument);
+                            Log.Info($"transactionInfo Number: {transactionInfo.Number}");
+                            Log.Info($"transactionInfo IsSignatureVerified: {transactionInfo.IsSignatureVerified}");
 
                             if (transactionInfo.IsSignatureVerified)
                             {
                                 Log.Info("This transaction requires signature. We will reverse it");
-                                var revResult = api.Reverse(transactionInfo.Number, 120000, out var revResponse);
+                                var revResult = api.Reverse(transactionInfo.Number, out var revResponse);
                                 return new Result<PaymentData>(ResultCode.TransactionCancelled, data: data);
                             }
 
@@ -155,7 +157,6 @@ namespace Acrelec.Mockingbird.Payment
                             data.HasClientReceipt = true;
                         }
                     }
-
                     PersistTransaction(payResponse, ticketDocument);
 
                     var disconnectResult = api.Disconnect();
@@ -177,6 +178,11 @@ namespace Acrelec.Mockingbird.Payment
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ticketDocument"></param>
+        /// <returns></returns>
         private TransactionInfo RetrieveInfo(XNode ticketDocument)
         {
             var result = new TransactionInfo();
@@ -201,13 +207,16 @@ namespace Acrelec.Mockingbird.Payment
             return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Shutdown()
         {
             Log.Info("Shutting down...");
             Program.ManualResetEvent.Set();
         }
 
-        private void PersistTransaction(COMConcertLibrary.SerialPortReceive result, XNode ticket)
+        private void PersistTransaction(TransactionResponse result, XNode ticket)
         {
             try
             {
@@ -224,15 +233,15 @@ namespace Acrelec.Mockingbird.Payment
                     new XElement("response",
                         new XElement("date", DateTime.Now.ToString("yyyyMMdd")),
                         new XElement("time", DateTime.Now.ToString("HHmmss")),
-                        new XElement("eposNumber", result.eposNumber),
-                        new XElement("responseCode", result.responseCode),
-                        new XElement("amount", result.amount),
-                        new XElement("paymentMode", result.paymentMode),
-                        new XElement("responseData", result.responseData),
-                        new XElement("currency", result.currency),
-                        new XElement("privateData", result.privateData),
-                        new XElement("option", result.option),
-                        new XElement("nonConcertData", result.nonConcertData)
+                    //    new XElement("eposNumber", result.eposNumber),
+                        new XElement("responseCode", result.AuthorizationCode),
+                        new XElement("amount", result.TransactionAmount),
+                        new XElement("paymentMode", result.EntryMethod),
+                        new XElement("responseData", result.GemsReceiptID),
+                        new XElement("currency", Utils.GetCurrencySymbol(Convert.ToInt32(result.Currency))),
+                        new XElement("privateData", result.TransactionType),
+                        new XElement("option", result.AID),
+                        new XElement("nonConcertData", result.NonECRUtilATLData)
                     ));
 
                 if (ticket != null)
@@ -292,6 +301,10 @@ namespace Acrelec.Mockingbird.Payment
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ticket"></param>
         private static void CreateCustomerTicket(XNode ticket)
         {
             var customerReceipt = ticket.XPathSelectElement("//RECEIPT[@STYPE='CUSTOMER']");

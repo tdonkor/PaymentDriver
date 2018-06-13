@@ -21,7 +21,6 @@ namespace Acrelec.Mockingbird.Payment.Settlement
             Log.Info($"Creating listener on port { port }...");
 
             _worker = worker;
-
             _tcpListener = new TcpListener(IPAddress.Any, port);
             _tcpListener.Start();
 

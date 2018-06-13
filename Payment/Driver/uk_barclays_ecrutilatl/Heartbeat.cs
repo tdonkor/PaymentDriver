@@ -3,7 +3,7 @@ using System.Threading;
 using Acrelec.Library.Logger;
 using Acrelec.Mockingbird.Payment.Configuration;
 using Acrelec.Mockingbird.Payment.Contracts;
-using com.ingenico.cli.comconcert;
+//using com.ingenico.cli.comconcert;
 
 namespace Acrelec.Mockingbird.Payment
 {
@@ -51,10 +51,11 @@ namespace Acrelec.Mockingbird.Payment
 
             try
             {
-                using (var api = new ComConcertApi())
+               
+                using (var api = new ECRUtilATLApi())
                 {
-                    var connectResult = api.Connect(configuration.Port);
-                    if (connectResult != COMConcertLibrary.ConcertErrMsg.None)
+                    var connectResult = api.Connect();
+                    if (connectResult != ECRUtilATLErrMsg.OK)
                     {
                         Alive = false;
                         Log.Debug($"Connect result: {connectResult}");
@@ -62,7 +63,7 @@ namespace Acrelec.Mockingbird.Payment
                     }
 
                     var disconnectResult = api.Disconnect();
-                    if (disconnectResult != COMConcertLibrary.ConcertErrMsg.None)
+                    if (disconnectResult != ECRUtilATLErrMsg.OK)
                     {
                         Alive = false;
                         Log.Debug($"Disconnect result: {disconnectResult}");
