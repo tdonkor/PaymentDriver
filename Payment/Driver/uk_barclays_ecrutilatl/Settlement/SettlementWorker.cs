@@ -66,24 +66,24 @@ namespace Acrelec.Mockingbird.Payment.Settlement
 
         private static void ExecuteSettlement()
         {
-            using (var api = new ECRUtilATLApi())
-            {
-                var config = RuntimeConfiguration.Instance;
+           // using (var api = new ECRUtilATLApi())
+           // {
+                //var config = RuntimeConfiguration.Instance;
 
-                api.Connect();
+                //api.Connect();
 
-                Log.Info("Executing auto settlement...");
-                var result = api.EndOfDayReport(0, out var response);
-                if (result != ECRUtilATLErrMsg.OK)
-                {
-                    Log.Info($"Error executing settlement: {result}");
-                }
-                else
-                {
-                    Log.Info("Auto settlement executed.");
-                    PersistReport(response.NonECRUtilATLData);
-                }
-            }
+                //Log.Info("Executing auto settlement...");
+                //var result = api.EndOfDayReport(0, out var response);
+                //if (result != ECRUtilATLErrMsg.OK)
+                //{
+                //    Log.Info($"Error executing settlement: {result}");
+                //}
+                //else
+                //{
+                //    Log.Info("Auto settlement executed.");
+                //   // PersistReport(response);
+                //}
+           // }
         }
 
         private static void PersistReport(string buffer)

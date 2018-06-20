@@ -20,7 +20,11 @@ namespace Acrelec.Mockingbird.Payment
         TransactionResponse transactionResponse;
         TimeDateClass setTimeDate;
         GetAcquirerListClass getAcquirerList;
+        
 
+        /// <summary>
+        /// Constructor initialise the objects needed
+        /// </summary>
         public ECRUtilATLApi()
         {
 
@@ -85,9 +89,20 @@ namespace Acrelec.Mockingbird.Payment
         /// </summary>
         public ECRUtilATLErrMsg Disconnect()
         {
+
             Log.Info("Disconnecting...Reset the transaction");
             transaction.Reset();
-            return ECRUtilATLErrMsg.OK;
+            // log the status
+            Log.Info($"status = {getTerminalStatus.GetTheTerminalStatus()}");
+
+            ECRUtilATLErrMsg disconnResult = ECRUtilATLErrMsg.UknownValue;
+
+            if ((ECRUtilATLErrMsg)Convert.ToInt32(transactionResponse.DiagRequestOut) == ECRUtilATLErrMsg.OK)
+                disconnResult = ECRUtilATLErrMsg.OK;
+            else
+                disconnResult = ECRUtilATLErrMsg.UknownValue;
+
+            return disconnResult;
 
         }
 
@@ -115,8 +130,6 @@ namespace Acrelec.Mockingbird.Payment
             ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
             result = PopulateResponse(transaction);
 
-        
-
             return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
 
         }
@@ -126,27 +139,27 @@ namespace Acrelec.Mockingbird.Payment
         /// <param name="amount"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        //    public ECRUtilATLErrMsg Refund(int amount, uint timeout, out TransactionResponse result)
-        //    {
-        //        int intAmount;
-        //        var paymentType = TransactionType.Refund;
+        public ECRUtilATLErrMsg Refund(int amount, out TransactionResponse result)
+        {
+            int intAmount;
+            var paymentType = TransactionType.Refund;
 
-        //        Log.Info($"Executing refund - Amount: {amount}");
+            Log.Info($"Executing refund - Amount: {amount}");
 
-        //        //check amount is valid
-        //        intAmount = Utils.GetNumericAmountValue(amount);
+            //check amount is valid
+            intAmount = Utils.GetNumericAmountValue(amount);
 
-        //        if (intAmount == 0)
-        //            throw new Exception("Error in input");
+            if (intAmount == 0)
+                throw new Exception("Error in input");
 
-        //        // transaction Refund details
-        //        //
-        //        ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
-        //        result = PopulateResponse(transaction);
+            // transaction Refund details
+            //
+            ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
+            result = PopulateResponse(transaction);
 
-        //        return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
+            return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
 
-        //       }
+        }
 
         /// <summary>
         /// Reversal
@@ -169,53 +182,25 @@ namespace Acrelec.Mockingbird.Payment
         }
 
         /// <summary>
-        /// Ticket
-        /// </summary>
-        /// <param name="amount"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
-        public ECRUtilATLErrMsg Ticket(int amount, out TransactionResponse result)
-        {
-            int intAmount;
-
-            Log.Info("Printing ticket...");
-           // var paymentType = TransactionType.Sale;
-
-            //check amount is valid
-            intAmount = Utils.GetNumericAmountValue(amount);
-
-            if (intAmount == 0)
-                throw new Exception("Error in input");
-
-            // transaction details
-            //
-            //ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
-            result = PopulateResponse(transaction);
-
-            Log.Info($"Ticket Amount: {transaction.TransactionAmountOut}");
-            return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
-        }
-
-        /// <summary>
         /// End of day report
         /// </summary>
         /// <param name="amount"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public ECRUtilATLErrMsg EndOfDayReport(int amount, out TransactionResponse result)
-        {
+        //public ECRUtilATLErrMsg EndOfDayReport(out TransactionResponse result)
+        //{
+            
+        //    Log.Info("Printing end of day report...");
+        //    var paymentType = TransactionType.Sale;
 
+        //    ///Get Acquirer List
+        //    ///
+        //    ECRUtilATLTransaction(1, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
+        //    result = PopulateResponse(transaction);
 
-                Log.Info("Printing end of day report...");
+        //    return (ECRUtilATLErrMsg) (Convert.ToInt32(transaction.DiagRequestOut));
 
-                // transaction details
-                //
-                ECRUtilATLTransaction(0, Utils.GetTransactionTypeString(Convert.ToInt32(TransactionType.Refund)));
-                result = PopulateResponse(transaction);
-
-                return (ECRUtilATLErrMsg) (Convert.ToInt32(transaction.DiagRequestOut));
-
-            }
+        //    }
 
     /// <summary>
     /// Set the Ped Time
@@ -251,11 +236,11 @@ namespace Acrelec.Mockingbird.Payment
             transaction.Amount1In = amount.ToString();
             transaction.Amount1LabelIn = "Amount 1";
             transaction.Amount2In = "0";
-            transaction.Amount2LabelIn = "Amount 2";
+            transaction.Amount2LabelIn = string.Empty;
             transaction.Amount3In = "0";
-            transaction.Amount3LabelIn = "Amount 3";
+            transaction.Amount3LabelIn = string.Empty;
             transaction.Amount4In = "0";
-            transaction.Amount4LabelIn = "Amount 4";
+            transaction.Amount4LabelIn = string.Empty;
             transaction.ReferenceIn = string.Empty;
             transaction.TransactionIDIn = string.Empty;
             transaction.AuthorizationCodeIn = string.Empty;
@@ -316,6 +301,7 @@ namespace Acrelec.Mockingbird.Payment
             transactionResponse.ICCAppFileName = transaction.ICCApplicationFileNameOut;
             transactionResponse.ICCAppPreferredName = transaction.ICCApplicationPreferredNameOut;
             transactionResponse.TransactionId = transaction.TransactionIDOut;
+            transactionResponse.DiagRequestOut = transaction.DiagRequestOut;
 
             return transactionResponse;
         }

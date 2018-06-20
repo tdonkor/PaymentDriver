@@ -3,6 +3,7 @@ using Acrelec.Mockingbird.Payment.Configuration;
 using Acrelec.Mockingbird.Payment.Contracts;
 //using com.ingenico.cli.comconcert;
 using System;
+using System.Text;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -80,7 +81,7 @@ namespace Acrelec.Mockingbird.Payment
         }
 
         /// <summary>
-        /// 
+        /// Payment method
         /// </summary>
         /// <param name="amount"></param>
         /// <returns></returns>
@@ -120,7 +121,7 @@ namespace Acrelec.Mockingbird.Payment
 
                     var payResult = api.Pay(amount, out var payResponse);
                     Log.Info($"Pay Result: {payResult}");
-                    Log.Info($"Pay Response Data: {payResponse.TransactionStatus}");
+                    Log.Info($"Pay Response Data: { Utils.GetTransactionOutResult(payResponse.TransactionStatus)}");
 
                     if (payResult != ECRUtilATLErrMsg.OK)
                     {
@@ -128,36 +129,18 @@ namespace Acrelec.Mockingbird.Payment
                     }
                     data.Result = (PaymentResult)Utils.GetTransactionOutResult(payResponse.TransactionStatus);
                     data.PaidAmount = amount;
-                    XNode ticketDocument = null;
-                    var ticketResult = api.Ticket(amount, out var ticketResponse);
-                    Log.Info($"Ticket Result: {ticketResult}");
-                    
-                    //TEST
-                    ticketResponse.NonECRUtilATLData = "transaction";
 
-                    if (ticketResult == ECRUtilATLErrMsg.OK)
-                    {
-                        Log.Info($"transaction status: {ticketResponse.TransactionStatus}");
-                        if (Utils.GetTransactionOutResult(ticketResponse.TransactionStatus) != TransactiontResult.Cancelled)
+
+                    if ((ECRUtilATLErrMsg) Convert.ToInt32(payResponse.DiagRequestOut) == ECRUtilATLErrMsg.OK)    
                         {
-                            ticketDocument = XDocument.Parse(ticketResponse.NonECRUtilATLData);
-
-                            var transactionInfo = RetrieveInfo(ticketDocument);
-                            Log.Info($"transactionInfo Number: {transactionInfo.Number}");
-                            Log.Info($"transactionInfo IsSignatureVerified: {transactionInfo.IsSignatureVerified}");
-
-                            if (transactionInfo.IsSignatureVerified)
-                            {
-                                Log.Info("This transaction requires signature. We will reverse it");
-                                var revResult = api.Reverse(transactionInfo.Number, out var revResponse);
-                                return new Result<PaymentData>(ResultCode.TransactionCancelled, data: data);
-                            }
-
-                            CreateCustomerTicket(ticketDocument);
+                        Log.Info($"transaction status: {payResponse.TransactionStatus}");
+                        if (Utils.GetTransactionOutResult(payResponse.TransactionStatus) == TransactiontResult.Successful)
+                        {
+                            CreateCustomerTicket(payResponse);
                             data.HasClientReceipt = true;
                         }
                     }
-                    PersistTransaction(payResponse, ticketDocument);
+                   PersistTransaction(payResponse);
 
                     var disconnectResult = api.Disconnect();
                     Log.Info($"Disconnect Result: {disconnectResult}");
@@ -183,29 +166,29 @@ namespace Acrelec.Mockingbird.Payment
         /// </summary>
         /// <param name="ticketDocument"></param>
         /// <returns></returns>
-        private TransactionInfo RetrieveInfo(XNode ticketDocument)
-        {
-            var result = new TransactionInfo();
-            foreach (var receipt in ticketDocument.XPathSelectElements("CREDIT_CARD_RECEIPT/RECEIPT"))
-            {
-                foreach (var lf in receipt.Elements("LF"))
-                {
-                    if (lf.Attribute("ID_NAME").Value == "TRANSACTION NUMBER")
-                    {   
-                        result.Number = lf.Value.Replace("TXN ", "");
-                    }
+        //private TransactionInfo RetrieveInfo(XNode ticketDocument)
+        //{
+        //    var result = new TransactionInfo();
+        //    foreach (var receipt in ticketDocument.XPathSelectElements("CREDIT_CARD_RECEIPT/RECEIPT"))
+        //    {
+        //        foreach (var lf in receipt.Elements("LF"))
+        //        {
+        //            if (lf.Attribute("ID_NAME").Value == "TRANSACTION NUMBER")
+        //            {   
+        //                result.Number = lf.Value.Replace("TXN ", "");
+        //            }
 
-                    if(lf.Attribute("ID_NAME").Value == "CVM RESULT")
-                    {
-                        result.IsSignatureVerified = lf.Value == "SIGNATURE VERIFIED";
-                    }
-                }
-            }
+        //            if(lf.Attribute("ID_NAME").Value == "CVM RESULT")
+        //            {
+        //                result.IsSignatureVerified = lf.Value == "SIGNATURE VERIFIED";
+        //            }
+        //        }
+        //    }
 
-            Log.Info("Info retrieved with success");
+        //    Log.Info("Info retrieved with success");
 
-            return result;
-        }
+        //    return result;
+        //}
 
         /// <summary>
         /// 
@@ -216,83 +199,67 @@ namespace Acrelec.Mockingbird.Payment
             Program.ManualResetEvent.Set();
         }
 
-        private void PersistTransaction(TransactionResponse result, XNode ticket)
+        private void PersistTransaction(TransactionResponse result)
         {
             try
             {
                 var config = AppConfiguration.Instance;
                 var outputDirectory = Path.GetFullPath(config.OutPath);
-                var outputPath = Path.Combine(outputDirectory, $"{DateTime.Now:yyyyMMddHHmmss}_ticket.xml");
+                var outputPath = Path.Combine(outputDirectory, $"{DateTime.Now:yyyyMMddHHmmss}_ticket.txt");
 
                 if (!Directory.Exists(outputDirectory))
                 {
                     Directory.CreateDirectory(outputDirectory);
                 }
 
-                var root = new XElement("transaction",
-                    new XElement("response",
-                        new XElement("date", DateTime.Now.ToString("yyyyMMdd")),
-                        new XElement("time", DateTime.Now.ToString("HHmmss")),
-                    //    new XElement("eposNumber", result.eposNumber),
-                        new XElement("responseCode", result.AuthorizationCode),
-                        new XElement("amount", result.TransactionAmount),
-                        new XElement("paymentMode", result.EntryMethod),
-                        new XElement("responseData", result.GemsReceiptID),
-                        new XElement("currency", Utils.GetCurrencySymbol(Convert.ToInt32(result.Currency))),
-                        new XElement("privateData", result.TransactionType),
-                        new XElement("option", result.AID),
-                        new XElement("nonConcertData", result.NonECRUtilATLData)
-                    ));
+                StringBuilder customerReceipt = new StringBuilder();
+                StringBuilder merchantReceipt = new StringBuilder();
 
-                if (ticket != null)
-                {
-                    var customerReceipt = ticket.XPathSelectElement("//RECEIPT[@STYPE='CUSTOMER']");
-                    if (customerReceipt != null)
-                    {
-                        root.Add(new XElement("customerReceipt",
-                            customerReceipt.Elements().Select(_ =>
-                            {
-                                var tag = new XElement("tag", _.Value);
-                                if (_.Attribute("ID") != null)
-                                {
-                                    tag.Add(new XAttribute("id", _.Attribute("ID").Value));
-                                }
+                //get the reponse details for the ticket
+                customerReceipt.Append($"\nCUSTOMER RECEIPT\n");
+                customerReceipt.Append($"================\n\n");
+                customerReceipt.Append($"MERCHANT NAME:  {result.MerchantName}\n");         
+                customerReceipt.Append($"MERCHANT ADDR1: {result.MerchantAddress1}\n");   
+                customerReceipt.Append($"MERCHANT ADDR2: {result.MerchantAddress2}\n");    
+                customerReceipt.Append($"Aquirer Merchant ID: {result.AcquirerMerchantID}\n");   
+                customerReceipt.Append($"TID: {result.TerminalId}\n");      
+                customerReceipt.Append($"AID: {result.AID}\n");                 
+                customerReceipt.Append($"CARD SCHEME NAME: {result.CardSchemeName}\n");     
+                customerReceipt.Append($"PAN: {result.PAN}\n");              
+                customerReceipt.Append($"PAN SEQUNCE NUMBER : PAN.SEQ {result.PANSeqNum}\n");      
+                customerReceipt.Append($"TRANSACTION TYPE: {Utils.GetTransactionTypeString(Convert.ToInt32(result.TransactionType))}\n");
+                customerReceipt.Append($"Currency: {Utils.GetCurrencySymbol(Convert.ToInt32(result.Currency))}\n");
+                customerReceipt.Append($"AMOUNT: {Utils.GetCurrencySymbol(Convert.ToInt32(result.Currency))} {result.TransactionAmount}\n");  
+                customerReceipt.Append($"TOTAL AMOUNT: {Utils.FormatReceiptAmount(result.TotalAmount)}\n");   
+                customerReceipt.Append($"CVM:{ result.CVM}\n");
+                customerReceipt.Append($"HOST MESSAGE{result.HostMessage}\n");
+                customerReceipt.Append($"ACQUIRER RESPONSE CODE: {result.AcquirerResponseCode}\n");
 
-                                if (_.Attribute("ID_NAME") != null)
-                                {
-                                    tag.Add(new XAttribute("name", _.Attribute("ID_NAME").Value));
-                                }
-                                return tag;
-                            })));
-                    }
+                //get the reponse details for the ticket
+                merchantReceipt.Append($"\n\nMERCHANT RECEIPT\n");
+                merchantReceipt.Append($"================\n\n");
+                merchantReceipt.Append($"Aquirer Merchant ID: {result.AcquirerMerchantID}\n");
+                merchantReceipt.Append($"MERCHANT NAME:  {result.MerchantName}\n");
+                merchantReceipt.Append($"MERCHANT ADDR1: {result.MerchantAddress1}\n");
+                merchantReceipt.Append($"MERCHANT ADDR2: {result.MerchantAddress2}\n");
+                merchantReceipt.Append($"TID: {result.TerminalId}\n");
+                merchantReceipt.Append($"AID: {result.AID}\n");
+                merchantReceipt.Append($"CARD SCHEME NAME: {result.CardSchemeName}\n");
+                merchantReceipt.Append($"PAN: {result.PAN}\n");
+                merchantReceipt.Append($"PAN SEQUNCE NUMBER : PAN.SEQ {result.PANSeqNum}\n");
+                merchantReceipt.Append($"TRANSACTION TYPE: {Utils.GetTransactionTypeString(Convert.ToInt32(result.TransactionType))}\n");
+                merchantReceipt.Append($"Currency: { Utils.GetCurrencySymbol(Convert.ToInt32(result.Currency))}\n");
+                merchantReceipt.Append($"AMOUNT: { Utils.GetCurrencySymbol(Convert.ToInt32(result.Currency))} {result.TransactionAmount}\n");
+                merchantReceipt.Append($"TOTAL AMOUNT: {Utils.FormatReceiptAmount(result.TotalAmount)}\n");
+                merchantReceipt.Append($"Transaction DATE TIME: {result.TxnDateTime}\n");
+                merchantReceipt.Append($"CVM:{result.CVM}\n");
+                merchantReceipt.Append($"CVM:{ result.CVM}\n");
+                merchantReceipt.Append($"HOST MESSAGE{result.HostMessage}\n");
 
 
-                    var merchantReceipt = ticket.XPathSelectElement("//RECEIPT[@STYPE='MERCHANT']");
-                    if (merchantReceipt != null)
-                    {
-                        root.Add(new XElement("merchantReceipt",
-                            merchantReceipt.Elements().Select(_ =>
-                            {
-                                var tag = new XElement("tag", _.Value);
-                                if (_.Attribute("ID") != null)
-                                {
-                                    tag.Add(new XAttribute("id", _.Attribute("ID").Value));
-                                }
-
-                                if (_.Attribute("ID_NAME") != null)
-                                {
-                                    tag.Add(new XAttribute("name", _.Attribute("ID_NAME").Value));
-                                }
-                                return tag;
-                            })));
-                    }
-                }
-
-                var document = new XDocument(root);
-
-                Log.Info($"Persist Transaction path: {ticketPath}");
-                //Write the new ticket
-                document.Save(outputPath);
+                Log.Info("Persisting ticket to {0}", outputPath);
+                ////Write the new ticket
+                File.WriteAllText(outputPath, customerReceipt.ToString() + merchantReceipt.ToString());
             }
             catch (Exception ex)
             {
@@ -305,17 +272,37 @@ namespace Acrelec.Mockingbird.Payment
         /// 
         /// </summary>
         /// <param name="ticket"></param>
-        private static void CreateCustomerTicket(XNode ticket)
+        private static void CreateCustomerTicket(TransactionResponse ticket)
         {
-            var customerReceipt = ticket.XPathSelectElement("//RECEIPT[@STYPE='CUSTOMER']");
-            var ticketEntries = customerReceipt.Elements().Select(_ => _.Value).ToList();
-            var ticketContent = string.Join("\n", ticketEntries);
+            StringBuilder ticketContent = new StringBuilder();
+
+            //get the reponse details for the ticket
+            ticketContent.Append($"CUSTOMER RECEIPT\n");
+            ticketContent.Append($"================\n\n");
+
+            ticketContent.Append($"{ticket.MerchantName}\n");         // Merchant name
+            ticketContent.Append($"{ticket.MerchantAddress1}\n");     // Merchant Addr1
+            ticketContent.Append($"{ticket.MerchantAddress2}\n");     // Merchant Addr2
+            ticketContent.Append($"{ticket.AcquirerMerchantID}\n");   // Aquirer Merchant ID name
+            ticketContent.Append($"{ticket.TerminalId}\n");           // Terminal ID
+            ticketContent.Append($"{ticket.AID}\n");                  // AID
+            ticketContent.Append($"{ticket.CardSchemeName}\n");       // Card Schema name
+            ticketContent.Append($"{ticket.PAN}\n");                  // Pan
+            ticketContent.Append($"PAN.SEQ {ticket.PANSeqNum}\n");            // Pan Seq num
+            ticketContent.Append($"{Utils.GetTransactionTypeString(Convert.ToInt32(ticket.TransactionType))}\n");      // Transaction Type
+            ticketContent.Append($"Amount: {Utils.GetCurrencySymbol(Convert.ToInt32(ticket.Currency))} {ticket.TransactionAmount}\n");    //Amount
+            ticketContent.Append("\t----------\n");
+            ticketContent.Append($"Total {ticket.TotalAmount}\n");    //Total Amount
+            ticketContent.Append("\t----------\n\n");
+            ticketContent.Append($"{DateTime.Now.ToShortTimeString()} {DateTime.Now.ToShortDateString()}");
+            ticketContent.Append("\nTHANK YOU \n");
+            ticketContent.Append($"{ticket.HostMessage}\n");          // Host Message
 
             try
             {
                 Log.Info("Persisting ticket to {0}", ticketPath);
-                //Write the new ticket
-                File.WriteAllText(ticketPath, ticketContent);
+                ////Write the new ticket
+                File.WriteAllText(ticketPath, ticketContent.ToString());
             }
             catch (Exception ex)
             {

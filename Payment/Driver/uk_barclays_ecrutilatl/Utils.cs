@@ -142,7 +142,7 @@ namespace Acrelec.Mockingbird.Payment
         public string ICCAppFileName;
         public string ICCAppPreferredName;
         public string TransactionId;
-        public string NonECRUtilATLData;
+        public string DiagRequestOut;
     }
 
     class Utils
@@ -342,5 +342,11 @@ namespace Acrelec.Mockingbird.Payment
 
             return CurrencySymbol;
         }
+
+        public static string FormatReceiptAmount(string amountStr)
+        {
+            float amount = 0.0f;
+            amount = float.Parse(amountStr) / 100;
+            return amount.ToString("n2");        }
     }
 }
