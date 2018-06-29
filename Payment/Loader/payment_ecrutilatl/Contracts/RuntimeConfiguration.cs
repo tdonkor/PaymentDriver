@@ -11,6 +11,12 @@ namespace Acrelec.Mockingbird.Payment.Contracts
         }
 
         /// <summary>
+        /// IP Address
+        /// </summary>
+        [DataMember]
+        public string IpAddress { get; set; }
+
+        /// <summary>
         /// Transaction timeout
         /// </summary>
         [DataMember]
@@ -33,6 +39,8 @@ namespace Acrelec.Mockingbird.Payment.Contracts
         /// </summary>
         [DataMember]
         public bool ForceOnline { get; set; }
+
+      
 
         public static RuntimeConfiguration Instance { get; set; }
     }

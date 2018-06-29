@@ -9,6 +9,8 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using Acrelec.Mockingbird.Payment.Configuration;
 using Acrelec.Mockingbird.Payment.Contracts;
+using System.Text;
+using ECRUtilATLLib;
 
 namespace Acrelec.Mockingbird.Payment.Settlement
 {
@@ -66,55 +68,61 @@ namespace Acrelec.Mockingbird.Payment.Settlement
 
         private static void ExecuteSettlement()
         {
-           // using (var api = new ECRUtilATLApi())
-           // {
-                //var config = RuntimeConfiguration.Instance;
+            using (var api = new ECRUtilATLApi())
+            {
+                var config = RuntimeConfiguration.Instance;
 
-                //api.Connect();
+                api.Connect(config.IpAddress);
 
-                //Log.Info("Executing auto settlement...");
-                //var result = api.EndOfDayReport(0, out var response);
-                //if (result != ECRUtilATLErrMsg.OK)
-                //{
-                //    Log.Info($"Error executing settlement: {result}");
-                //}
-                //else
-                //{
-                //    Log.Info("Auto settlement executed.");
-                //   // PersistReport(response);
-                //}
-           // }
+                Log.Info("Executing auto settlement...");
+                var result = api.EndOfDayReport();
+                if (result == null)
+                {
+                    Log.Info($"Error executing settlement: {result}");
+                }
+                else
+                {
+                    Log.Info("Auto settlement executed.");
+                   PersistReport(result);
+                }
+            }
         }
 
-        private static void PersistReport(string buffer)
+        private static void PersistReport(SettlementClass report)
         {
             try
             {
-                var bufferDocument = XDocument.Parse(buffer);
-                var receipt = bufferDocument.XPathSelectElement("//RECEIPT");
-                var root = new XElement("EndOfDay");
-                if (receipt != null)
-                {
-                    root.Add(
-                        receipt.Elements().Select(_ =>
-                        {
-                            var tag = new XElement("tag", _.Value);
-                            if (_.Attribute("ID") != null)
-                            {
-                                tag.Add(new XAttribute("id", _.Attribute("ID").Value));
-                            }
+                StringBuilder reportContent = new StringBuilder();
+                Log.Info($"Persist Report");
 
-                            if (_.Attribute("ID_NAME") != null)
-                            {
-                                tag.Add(new XAttribute("name", _.Attribute("ID_NAME").Value));
-                            }
-                            return tag;
-                        }));
-                }
+                //get the reponse details for the ticket
+                reportContent.Append($"End of Day\n");
+                reportContent.Append($"================\n\n");
+
+
+
+                reportContent.Append($"{report.AcquirerMerchantIDOut}\n");
+                reportContent.Append($"{report.AcquirerNameOut}\n");
+                reportContent.Append($"{report.LastMessageNumberOut}\n");
+                reportContent.Append($"{report.MerchantAddress1Out}\n");
+                reportContent.Append($"{report.MerchantAddress2Out}\n");
+                reportContent.Append($"{report.NumCardSchemeOut}\n");
+                reportContent.Append($"{report.QuantityCashOut}\n");
+                reportContent.Append($"{report.QuantityClessCreditsOut}\n");
+                reportContent.Append($"{report.QuantityClessDebitsOut}\n");
+                reportContent.Append($"{report.QuantityCreditsOut}\n");
+                reportContent.Append($"{report.QuantityDebitsOut}\n");
+                reportContent.Append($"{report.SettlementResultOut}\n");
+                reportContent.Append($"{report.TerminalIdentityOut}\n");
+                reportContent.Append($"{report.ValueCashOut}\n");
+                reportContent.Append($"{report.ValueClessCreditsOut}\n");
+                reportContent.Append($"{report.ValueClessDebitsOut}\n");
+                reportContent.Append($"{report.ValueCreditsOut}\n");
+                reportContent.Append($"{report.ValueDebitsOut}\n");
 
                 var config = AppConfiguration.Instance;
                 var outputDirectory = Path.GetFullPath(config.OutPath);
-                var outputPath = Path.Combine(outputDirectory, $"{DateTime.Now:yyyyMMddHHmmss}_settlement.xml");
+                var outputPath = Path.Combine(outputDirectory, $"{DateTime.Now:yyyyMMddHHmmss}_settlement.txt");
 
                 if (!Directory.Exists(outputDirectory))
                 {
@@ -123,7 +131,7 @@ namespace Acrelec.Mockingbird.Payment.Settlement
 
                 Log.Info($"Persist Report path: {outputPath}");
                 //Write the new ticket
-                new XDocument(root).Save(outputPath);
+                File.WriteAllText(outputPath, reportContent.ToString());
             }
             catch (Exception ex)
             {

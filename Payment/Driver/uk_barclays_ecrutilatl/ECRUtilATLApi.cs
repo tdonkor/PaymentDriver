@@ -5,6 +5,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Acrelec.Library.Logger;
+using Acrelec.Mockingbird.Payment.Configuration;
+using Acrelec.Mockingbird.Payment.Contracts;
 using ECRUtilATLLib;
 
 
@@ -20,20 +22,29 @@ namespace Acrelec.Mockingbird.Payment
         TransactionResponse transactionResponse;
         TimeDateClass setTimeDate;
         GetAcquirerListClass getAcquirerList;
-        
+        SettlementClass getSettlement;
+        SettlementRequest settlementRequest;
+        SignatureClass checkSignature;
+        VoiceReferralClass voiceReferral;
+        CancelTransactionClass cancelTransaction;
+       
+
+
 
         /// <summary>
-        /// Constructor initialise the objects needed
+        /// Constructor initialise All the objects needed
         /// </summary>
         public ECRUtilATLApi()
         {
-
             transaction = new TransactionClass();
             termimalStatus = new StatusClass();
             getTerminalStatus = new GetTerminalStatus();
             setTimeDate = new TimeDateClass();
             getAcquirerList = new GetAcquirerListClass();
-
+            getSettlement = new SettlementClass();
+            checkSignature = new SignatureClass();
+            voiceReferral = new VoiceReferralClass();
+            cancelTransaction = new CancelTransactionClass();
         }
 
         public void Dispose()
@@ -44,19 +55,21 @@ namespace Acrelec.Mockingbird.Payment
         public static extern bool FreeLibrary(IntPtr hModule);
 
         /// <summary>
-        /// Check the pre=requistes have been set:
-        /// Ip Address is 1.1.1.2
+        /// Check the prerequistes have been set:
+        /// Ip Address is called
         /// Status is at IDLE
         /// Disable the printing to print from the Transaction response
         /// </summary>
         /// <returns></returns>
-        public ECRUtilATLErrMsg Connect()
+        public ECRUtilATLErrMsg Connect(string ipAddress)
         {
-            
+
             //set static IP address
             termimalIPAddress = new TerminalIPAddress();
-            termimalIPAddress.IPAddressIn = "1.1.1.2";
+            termimalIPAddress.IPAddressIn = ipAddress;
             termimalIPAddress.SetIPAddress();
+
+            Log.Info($"IP Address in connect() : {ipAddress}");
 
             // check the status is at IDLE
             getTerminalStatus = new GetTerminalStatus();
@@ -128,58 +141,46 @@ namespace Acrelec.Mockingbird.Payment
             // Transaction Sale details
             //
             ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
+
+            //check if transaction is a signature
+           // checkSignature.CheckSignReq();
+            //if (transaction.EntryMethodOut == "2")
+            //{
+            //    //reverse or cancel the transaction
+
+            //    Log.Info($"status before cancel = {getTerminalStatus.GetTheTerminalStatus()}");
+            //    Log.Info($"Cancelling transaction");
+            //    cancelTransaction.Launch();
+
+            //    Log.Info($"Cancel  is {((ECRUtilATLErrMsg)Convert.ToInt32(cancelTransaction.DiagRequestOut)).ToString()}");
+            //}
+
             result = PopulateResponse(transaction);
-
-            return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
-
-        }
-        /// <summary>
-        /// Refund
-        /// </summary>
-        /// <param name="amount"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
-        public ECRUtilATLErrMsg Refund(int amount, out TransactionResponse result)
-        {
-            int intAmount;
-            var paymentType = TransactionType.Refund;
-
-            Log.Info($"Executing refund - Amount: {amount}");
-
-            //check amount is valid
-            intAmount = Utils.GetNumericAmountValue(amount);
-
-            if (intAmount == 0)
-                throw new Exception("Error in input");
-
-            // transaction Refund details
-            //
-            ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
-            result = PopulateResponse(transaction);
-
             return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
 
         }
 
-        /// <summary>
-        /// Reversal
-        /// </summary>
-        /// <param name="amount"></param>
-        /// <param name="result"></param>
-        //       /// <returns></returns>
-        public ECRUtilATLErrMsg Reverse(string transactionNumber, out TransactionResponse result)
-        {
-            var paymentType = TransactionType.Reversal;
+        //public ECRUtilATLErrMsg Reverse(int amount, out TransactionResponse result)
+        //{
+        //    int intAmount;
+        //    var paymentType = TransactionType.Reversal;
 
-            Log.Info($"Executing Reversal");
+        //    Log.Info($"Executing Reversal - Amount: {amount}");
 
-            // transaction details
-            //
-            ECRUtilATLTransaction(0, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
-            result = PopulateResponse(transaction);
+        //    //check amount is valid
+        //    intAmount = Utils.GetNumericAmountValue(amount);
 
-            return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
-        }
+        //    if (intAmount == 0)
+        //        throw new Exception("Error in input");
+
+        //    // Transaction Sale details
+        //    //
+        //    ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
+        //    result = PopulateResponse(transaction);
+
+        //    return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
+
+        //}
 
         /// <summary>
         /// End of day report
@@ -187,26 +188,31 @@ namespace Acrelec.Mockingbird.Payment
         /// <param name="amount"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        //public ECRUtilATLErrMsg EndOfDayReport(out TransactionResponse result)
-        //{
-            
-        //    Log.Info("Printing end of day report...");
-        //    var paymentType = TransactionType.Sale;
+        public SettlementClass EndOfDayReport()
+        {
 
-        //    ///Get Acquirer List
-        //    ///
-        //    ECRUtilATLTransaction(1, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
-        //    result = PopulateResponse(transaction);
+            Log.Info("Printing end of day report...");
 
-        //    return (ECRUtilATLErrMsg) (Convert.ToInt32(transaction.DiagRequestOut));
+            //Get Acquirer List
+            getAcquirerList.Launch();
 
-        //    }
+            //do the settlement
 
-    /// <summary>
-    /// Set the Ped Time
-    /// </summary>
-    /// <returns></returns>
-    public string SetTime()
+            getSettlement.AcquirerIndexIn = settlementRequest.AcquirerIndex;
+            getSettlement.SettlementParamIn = (short)settlementRequest.SettlementParameter;
+            getSettlement.DoSettlement();
+
+            if ((ECRUtilATLErrMsg)(Convert.ToInt32(getSettlement.DiagRequestOut)) == ECRUtilATLErrMsg.OK)
+                return getSettlement;
+            else return null;
+
+        }
+
+        /// <summary>
+        /// Set the Ped Time
+        /// </summary>
+        /// <returns></returns>
+        public string SetTime()
         {
             setTimeDate.DayIn = DateTime.Now.Day.ToString();
             setTimeDate.MonthIn = DateTime.Now.Month.ToString();
@@ -246,10 +252,17 @@ namespace Acrelec.Mockingbird.Payment
             transaction.AuthorizationCodeIn = string.Empty;
             transaction.OfferPWCBIn = (short)OfferPWCBState.PWCB_DISABLED;
 
+
+            
+
+            //Set voice referral
+            //voiceReferral.AuthorisationStatusIn = 1;
+            //voiceReferral.AuthorisationCodeIn = string.Empty;
+            //voiceReferral.SetAuthorisation();
+            //Log.Info($"VoiceReferral is {((ECRUtilATLErrMsg)Convert.ToInt32(voiceReferral.DiagRequestOut)).ToString()}");
+
             Log.Info("Transaction launched...");
             transaction.Launch();
-
-          
 
         }
 
@@ -277,7 +290,6 @@ namespace Acrelec.Mockingbird.Payment
             transactionResponse.PAN = transaction.PANOut;
             transactionResponse.ReceiptNumber = transaction.ReceiptNumberOut;
             transactionResponse.ReferenceResp = transaction.ReferenceOut;
-            transactionResponse.TransactionStatus = transaction.TransactionStatusOut;
             transactionResponse.AID = transaction.AIDOut;
             transactionResponse.PANSeqNum = transaction.PANSequenceNumberOut;
             transactionResponse.StartDate = transaction.StartDateOut;
@@ -293,7 +305,6 @@ namespace Acrelec.Mockingbird.Payment
             transactionResponse.DonationAmount = transaction.DonationAmountOut;
             transactionResponse.RedeemedAmount = transaction.RedeemedAmountOut;
             transactionResponse.HostMessage = transaction.HostMessageOut;
-            transactionResponse.TransactionType = transaction.TransactionTypeOut;
             transactionResponse.CVM = transaction.CVMOut;
             transactionResponse.GratuityAmount = transaction.GratuityAmountOut;
             transactionResponse.CashAmount = transaction.CashAmountOut;
@@ -302,6 +313,8 @@ namespace Acrelec.Mockingbird.Payment
             transactionResponse.ICCAppPreferredName = transaction.ICCApplicationPreferredNameOut;
             transactionResponse.TransactionId = transaction.TransactionIDOut;
             transactionResponse.DiagRequestOut = transaction.DiagRequestOut;
+            transactionResponse.TransactionStatus = transaction.TransactionStatusOut;
+            transactionResponse.TransactionType = transaction.TransactionTypeOut;
 
             return transactionResponse;
         }

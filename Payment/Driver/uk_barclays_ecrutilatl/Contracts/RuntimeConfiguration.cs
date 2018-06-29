@@ -28,6 +28,12 @@ namespace Acrelec.Mockingbird.Payment.Contracts
         [DataMember]
         public bool ForceOnline { get; set; }
 
+        /// <summary>
+        /// IP Address
+        /// </summary>
+        [DataMember]
+        public string IpAddress { get; set; }
+
         public static RuntimeConfiguration Instance { get; set; }
     }
 }

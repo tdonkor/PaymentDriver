@@ -3,7 +3,6 @@ using System.Threading;
 using Acrelec.Library.Logger;
 using Acrelec.Mockingbird.Payment.Configuration;
 using Acrelec.Mockingbird.Payment.Contracts;
-//using com.ingenico.cli.comconcert;
 
 namespace Acrelec.Mockingbird.Payment
 {
@@ -51,10 +50,9 @@ namespace Acrelec.Mockingbird.Payment
 
             try
             {
-               
                 using (var api = new ECRUtilATLApi())
                 {
-                    var connectResult = api.Connect();
+                    var connectResult = api.Connect(configuration.IpAddress);
                     if (connectResult != ECRUtilATLErrMsg.OK)
                     {
                         Alive = false;

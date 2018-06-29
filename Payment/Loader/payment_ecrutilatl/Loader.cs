@@ -74,6 +74,14 @@ namespace Acrelec.Mockingbird.Payment
                         CurrentValue = "False",
                         ControlDescription = "Force online transaction"
                     },
+                     new AdminPeripheralSetting()
+                    {
+                        ControlType = SettingDataType.IpAddress,
+                        ControlName = "IP Address",
+                        RealName = "IpAddress",
+                        CurrentValue = "1.1.1.2",
+                        ControlDescription = "Static IP Address of the PED"
+                    },
                     new AdminPeripheralSetting()
                     {
                         ControlType = SettingDataType.Int,

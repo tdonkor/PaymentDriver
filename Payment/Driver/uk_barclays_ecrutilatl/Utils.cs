@@ -347,6 +347,22 @@ namespace Acrelec.Mockingbird.Payment
         {
             float amount = 0.0f;
             amount = float.Parse(amountStr) / 100;
-            return amount.ToString("n2");        }
+            return amount.ToString("n2");
+        }
+
+        public static string CardVerification(short num)
+        {
+
+            string[] CvmResult = { "CVM not available",
+                                   "No Cardholder verification",
+                                   "Cardholder verified by signature",
+                                   "Cardholder verified by PIN",
+                                   "Cardholder verified by both Signature and PIN",
+                                   "PIN was bypassed",
+                                   " Verified by Cardholder device",
+                                   };
+
+            return CvmResult[num];
+        }
     }
 }

@@ -23,7 +23,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Acrelec.Mockingbird.Core", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ECRUtilATL Libraries", "ECRUtilATL Libraries", "{309D8C3D-728C-40F5-8ED5-A926E82A5394}"
 	ProjectSection(SolutionItems) = preProject
-		ComConcert Libraries\com.ingenico.cli.comconcert.dll = ComConcert Libraries\com.ingenico.cli.comconcert.dll
 		ECRUtilATL Libraries\ECRUtilATL.dll = ECRUtilATL Libraries\ECRUtilATL.dll
 	EndProjectSection
 EndProject
