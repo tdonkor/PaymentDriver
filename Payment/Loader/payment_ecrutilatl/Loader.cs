@@ -58,22 +58,22 @@ namespace Acrelec.Mockingbird.Payment
                 DriverFolderName = Path.GetDirectoryName(Constants.DRIVER_PATH).Split(Path.DirectorySeparatorChar).Last(),
                 ConfigurationSettings = new List<AdminPeripheralSetting>()
                 {
-                    new AdminPeripheralSetting()
-                    {
-                        ControlType = SettingDataType.SerialPortSelection,
-                        ControlName = "COM Port number",
-                        RealName = "Port",
-                        CurrentValue = "",
-                        ControlDescription = "Serial communication port for the EFT terminal (IPP350)"
-                    },
-                    new AdminPeripheralSetting()
-                    {
-                        ControlType = SettingDataType.Bool,
-                        ControlName = "Force online transaction",
-                        RealName = "ForceOnline",
-                        CurrentValue = "False",
-                        ControlDescription = "Force online transaction"
-                    },
+                    //new AdminPeripheralSetting()
+                    //{
+                    //    ControlType = SettingDataType.SerialPortSelection,
+                    //    ControlName = "COM Port number",
+                    //    RealName = "Port",
+                    //    CurrentValue = "",
+                    //    ControlDescription = "Serial communication port for the EFT terminal (IPP350)"
+                    //},
+                    //new AdminPeripheralSetting()
+                    //{
+                    //    ControlType = SettingDataType.Bool,
+                    //    ControlName = "Force online transaction",
+                    //    RealName = "ForceOnline",
+                    //    CurrentValue = "False",
+                    //    ControlDescription = "Force online transaction"
+                    //},
                      new AdminPeripheralSetting()
                     {
                         ControlType = SettingDataType.IpAddress,

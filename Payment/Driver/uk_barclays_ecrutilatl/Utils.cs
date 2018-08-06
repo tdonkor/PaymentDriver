@@ -82,23 +82,7 @@ namespace Acrelec.Mockingbird.Payment
         Failed = 55,
         RequestReceived = 57
     }
-    public struct TransactionRequest
-    {
-        public string MessageNumber;
-        public string TxnType;
-        public string Amount1;
-        public string Amount2;
-        public string Amount3;
-        public string Amount4;
-        public string Amount1Label;
-        public string Amount2Label;
-        public string Amount3Label;
-        public string Amount4Label;
-        public string ReferenceReq;
-        public string TransactionId;
-        public string AuthorisationCode;
-        public short OfferPWCB;
-    }
+   
 
     public struct TransactionResponse
     {
@@ -159,9 +143,7 @@ namespace Acrelec.Mockingbird.Payment
             return amount;
         }
 
-        /// <summary>
-        /// Get the name of Transaction
-        /// </summary>
+       
         public static string GetTransactionTypeString(int TxnType)
         {
             string TxnName;
@@ -182,6 +164,25 @@ namespace Acrelec.Mockingbird.Payment
             }
 
             return TxnName;
+        }
+
+        public static int GetSelectedTransaction(string TxnType)
+        {
+            int TxnTypeVal;
+
+            switch (TxnType.ToUpper())
+            {
+                case "REFUND": TxnTypeVal = (int)TransactionType.Refund; break;
+                case "CASH ADVANCE": TxnTypeVal = (int)TransactionType.CashAdvance; break;
+                case "PWCB": TxnTypeVal = (int)TransactionType.PWCB; break;
+                case "PRE-AUTH": TxnTypeVal = (int)TransactionType.PreAuth; break;
+                case "COMPLETION": TxnTypeVal = (int)TransactionType.Completion; break;
+                case "VERIFY ACCOUNT": TxnTypeVal = (int)TransactionType.VerifyAccount; break;
+                case "REVERSAL": TxnTypeVal = (int)TransactionType.Reversal; break;
+                case "SALE": default: TxnTypeVal = (int)TransactionType.Sale; break;
+            }
+
+            return TxnTypeVal;
         }
 
         /// <summary>
@@ -359,7 +360,7 @@ namespace Acrelec.Mockingbird.Payment
                                    "Cardholder verified by PIN",
                                    "Cardholder verified by both Signature and PIN",
                                    "PIN was bypassed",
-                                   " Verified by Cardholder device",
+                                   "Verified by Cardholder device",
                                    };
 
             return CvmResult[num];

@@ -28,17 +28,17 @@ namespace Acrelec.Mockingbird.Payment.Contracts
         [DataMember]
         public int PosNumber { get; set; }
 
-        /// <summary>
-        /// COM Port
-        /// </summary>
-        [DataMember]
-        public string Port { get; set; }
+        ///// <summary>
+        ///// COM Port
+        ///// </summary>
+        //[DataMember]
+        //public string Port { get; set; }
 
-        /// <summary>
-        /// Force online transaction
-        /// </summary>
-        [DataMember]
-        public bool ForceOnline { get; set; }
+        ///// <summary>
+        ///// Force online transaction
+        ///// </summary>
+        //[DataMember]
+        //public bool ForceOnline { get; set; }
 
       
 

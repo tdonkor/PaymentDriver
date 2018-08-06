@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Acrelec.Library.Logger;
 using Acrelec.Mockingbird.Payment.Configuration;
@@ -25,10 +26,10 @@ namespace Acrelec.Mockingbird.Payment
         SettlementClass getSettlement;
         SettlementRequest settlementRequest;
         SignatureClass checkSignature;
-        VoiceReferralClass voiceReferral;
-        CancelTransactionClass cancelTransaction;
-       
+        VoiceReferralClass checkVoiceReferral;
 
+        Thread SignatureVerificationThread;
+        Thread VoiceReferralThread;
 
 
         /// <summary>
@@ -43,8 +44,7 @@ namespace Acrelec.Mockingbird.Payment
             getAcquirerList = new GetAcquirerListClass();
             getSettlement = new SettlementClass();
             checkSignature = new SignatureClass();
-            voiceReferral = new VoiceReferralClass();
-            cancelTransaction = new CancelTransactionClass();
+            checkVoiceReferral = new VoiceReferralClass();
         }
 
         public void Dispose()
@@ -63,13 +63,10 @@ namespace Acrelec.Mockingbird.Payment
         /// <returns></returns>
         public ECRUtilATLErrMsg Connect(string ipAddress)
         {
-
             //set static IP address
             termimalIPAddress = new TerminalIPAddress();
             termimalIPAddress.IPAddressIn = ipAddress;
             termimalIPAddress.SetIPAddress();
-
-            Log.Info($"IP Address in connect() : {ipAddress}");
 
             // check the status is at IDLE
             getTerminalStatus = new GetTerminalStatus();
@@ -90,7 +87,7 @@ namespace Acrelec.Mockingbird.Payment
             else
                 Log.Info("apiInitTxnReceiptPrint ON");
 
-            //check time is set
+            //check time is set4
             SetTime();
 
             //check theconnection  result 
@@ -102,7 +99,6 @@ namespace Acrelec.Mockingbird.Payment
         /// </summary>
         public ECRUtilATLErrMsg Disconnect()
         {
-
             Log.Info("Disconnecting...Reset the transaction");
             transaction.Reset();
             // log the status
@@ -128,8 +124,6 @@ namespace Acrelec.Mockingbird.Payment
         public ECRUtilATLErrMsg Pay(int amount, out TransactionResponse result)
         {
             int intAmount;
-            var paymentType = TransactionType.Sale;
-
             Log.Info($"Executing payment - Amount: {amount}");
 
             //check amount is valid
@@ -140,47 +134,29 @@ namespace Acrelec.Mockingbird.Payment
 
             // Transaction Sale details
             //
-            ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
-
-            //check if transaction is a signature
-           // checkSignature.CheckSignReq();
-            //if (transaction.EntryMethodOut == "2")
-            //{
-            //    //reverse or cancel the transaction
-
-            //    Log.Info($"status before cancel = {getTerminalStatus.GetTheTerminalStatus()}");
-            //    Log.Info($"Cancelling transaction");
-            //    cancelTransaction.Launch();
-
-            //    Log.Info($"Cancel  is {((ECRUtilATLErrMsg)Convert.ToInt32(cancelTransaction.DiagRequestOut)).ToString()}");
-            //}
+            DoTransaction(amount, TransactionType.Sale.ToString());
 
             result = PopulateResponse(transaction);
             return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
-
         }
 
-        //public ECRUtilATLErrMsg Reverse(int amount, out TransactionResponse result)
-        //{
-        //    int intAmount;
-        //    var paymentType = TransactionType.Reversal;
+        public ECRUtilATLErrMsg Reverse(int amount, out TransactionResponse result)
+        {
+            int intAmount;
+            Log.Info($"Executing Reversal - Amount: {amount}");
 
-        //    Log.Info($"Executing Reversal - Amount: {amount}");
+            //check amount is valid
+            intAmount = Utils.GetNumericAmountValue(amount);
 
-        //    //check amount is valid
-        //    intAmount = Utils.GetNumericAmountValue(amount);
+            if (intAmount == 0)
+                throw new Exception("Error in input");
+           
+            DoTransaction(amount, TransactionType.Reversal.ToString());
+            result = PopulateResponse(transaction);
 
-        //    if (intAmount == 0)
-        //        throw new Exception("Error in input");
+            return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
 
-        //    // Transaction Sale details
-        //    //
-        //    ECRUtilATLTransaction(amount, Utils.GetTransactionTypeString(Convert.ToInt32(paymentType)));
-        //    result = PopulateResponse(transaction);
-
-        //    return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
-
-        //}
+        }
 
         /// <summary>
         /// End of day report
@@ -190,7 +166,6 @@ namespace Acrelec.Mockingbird.Payment
         /// <returns></returns>
         public SettlementClass EndOfDayReport()
         {
-
             Log.Info("Printing end of day report...");
 
             //Get Acquirer List
@@ -227,50 +202,120 @@ namespace Acrelec.Mockingbird.Payment
             Log.Info($"\tDateTime: {setTimeDate.DayIn}:{setTimeDate.MonthIn}:{ setTimeDate.YearIn}:{ setTimeDate.HourIn}:{ setTimeDate.MinuteIn}:{setTimeDate.SecondIn}");
             return Utils.DisplayDiagReqOutput(Convert.ToInt32(setTimeDate.DiagRequestOut));
         }
-
+       
         /// <summary>
         ///  Do the transaction
         /// </summary>
         /// <param name="amount"></param>
         /// <param name="transactionType"></param>
-        private void ECRUtilATLTransaction(int amount, string transactionType)
+        private void DoTransaction(int amount, string transactionType)
         {
             Random randomNum = new Random();
 
             transaction.MessageNumberIn = randomNum.Next(100).ToString();
-            transaction.TransactionTypeIn = transactionType;
+            transaction.TransactionTypeIn = Utils.GetSelectedTransaction(transactionType).ToString();
+            Log.Info($"Selected Transaction type: {Utils.GetSelectedTransaction(transactionType).ToString()}");
             transaction.Amount1In = amount.ToString();
             transaction.Amount1LabelIn = "Amount 1";
             transaction.Amount2In = "0";
-            transaction.Amount2LabelIn = string.Empty;
+            transaction.Amount2LabelIn = "Amount 2";
             transaction.Amount3In = "0";
-            transaction.Amount3LabelIn = string.Empty;
+            transaction.Amount3LabelIn = "Amount 3";
             transaction.Amount4In = "0";
-            transaction.Amount4LabelIn = string.Empty;
+            transaction.Amount4LabelIn = "Amount 4";
             transaction.ReferenceIn = string.Empty;
             transaction.TransactionIDIn = string.Empty;
             transaction.AuthorizationCodeIn = string.Empty;
             transaction.OfferPWCBIn = (short)OfferPWCBState.PWCB_DISABLED;
 
+            //set signature verification
+            SignatureVerificationThread = new Thread(SignatureVerification);
+            SignatureVerificationThread.Start();
 
-            
+            VoiceReferralThread = new Thread(VoiceReferralAuthorisation);
+            VoiceReferralThread.Start();
 
-            //Set voice referral
-            //voiceReferral.AuthorisationStatusIn = 1;
-            //voiceReferral.AuthorisationCodeIn = string.Empty;
-            //voiceReferral.SetAuthorisation();
-            //Log.Info($"VoiceReferral is {((ECRUtilATLErrMsg)Convert.ToInt32(voiceReferral.DiagRequestOut)).ToString()}");
-
-            Log.Info("Transaction launched...");
+            Log.Info($"Transaction {transaction.TransactionTypeIn} launched...");
             transaction.Launch();
+
+            // Trying to abort the signature verification thread if it is alive
+            try { SignatureVerificationThread.Abort(); }
+            catch (Exception ThreadException) { Console.WriteLine(ThreadException.StackTrace); }
+            SignatureVerificationThread = null;
+
+            // Trying to abort the voice referral authorisation thread if it is alive
+            try { VoiceReferralThread.Abort(); }
+            catch (Exception ThreadException) { Console.WriteLine(ThreadException.StackTrace); }
+            VoiceReferralThread = null;
 
         }
 
-        /// <summary>
-        /// Populate the transaction response Object
-        /// </summary>
-        /// <param name="transaction"></param>
-        /// <returns>transactionResponse</returns>
+
+        public void SignatureVerification()
+        {
+            string CheckSignatureStatus = string.Empty;
+
+            Log.Info("Running checkSignature.CheckSignReq()");
+            checkSignature.CheckSignReq();
+            
+            //local variables
+            int ret = 0;
+
+            if (transaction.EntryMethodOut == "2")
+            {
+                SignatureVerificationThread.Abort();
+                Log.Info(" SignatureVerificationThread Aborted");
+            }
+           
+
+            ret = Int32.Parse(checkSignature.DiagRequestOut);
+            Log.Info($" checkSignature = {ret}");
+
+            switch (ret)
+            {
+                case 0: CheckSignatureStatus = "Signature In Progress"; break; // RET_OK
+                case 1: CheckSignatureStatus = "Server Down"; break;           // RET_SIGN_SERVER_DOWN
+                case 2: CheckSignatureStatus = "Timeout"; break;               // RET_TIMEOUT
+                case 3: CheckSignatureStatus = "Bad Request Size"; break;      // RET_BAD_REQUEST_SIZE
+                case 4: CheckSignatureStatus = "Bad Request Format"; break;    // RET_BAD_REQUEST_FORMAT
+                case 8: CheckSignatureStatus = "Ped Not Auth"; break;          // RET_PED_NOT_AUTHENTICATED
+                default: CheckSignatureStatus = "Unknown Status"; break;       // Unknown Status
+            }
+
+            if (ret != 0) //Error Case
+            {
+                Log.Error("Error in CheckSignature return ");
+            }
+            else
+            {
+                //set the signature Status
+                checkSignature.SignatureStatusIn = 2; //assign
+                checkSignature.SetSignStatus();
+                Log.Info($" SetSignStatus = {checkSignature.DiagRequestOut}");
+            }
+             
+        }
+
+
+        public void VoiceReferralAuthorisation()
+        {
+            
+
+            checkVoiceReferral.CheckVoiceReferralReq();
+            Console.WriteLine($"checkVoiceReferral out: {checkVoiceReferral.DiagRequestOut}");
+
+            //decline the voice referral 
+            checkVoiceReferral.AuthorisationStatusIn = 1; // Decline
+            checkVoiceReferral.AuthorisationCodeIn = "";
+            checkVoiceReferral.SetAuthorisation();
+            checkVoiceReferral = null;
+        }
+
+            /// <summary>
+            /// Populate the transaction response Object
+            /// </summary>
+            /// <param name="transaction"></param>
+            /// <returns>transactionResponse</returns>
         private TransactionResponse PopulateResponse(TransactionClass transaction)
         {
 
