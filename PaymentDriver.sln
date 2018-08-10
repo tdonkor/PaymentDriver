@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.27703.2000
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Payments", "Payments", "{98C4FF32-1931-438E-A3D5-9DE3AADD645C}"
 EndProject
@@ -23,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Acrelec.Mockingbird.Core", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ECRUtilATL Libraries", "ECRUtilATL Libraries", "{309D8C3D-728C-40F5-8ED5-A926E82A5394}"
 	ProjectSection(SolutionItems) = preProject
-		ECRUtilATL Libraries\ECRUtilATL.dll = ECRUtilATL Libraries\ECRUtilATL.dll
+		..\..\..\..\Program Files\Ingenico\ECR UTIL DLL\lib\ECRUtilATL.dll = ..\..\..\..\Program Files\Ingenico\ECR UTIL DLL\lib\ECRUtilATL.dll
 	EndProjectSection
 EndProject
 Global

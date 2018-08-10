@@ -11,12 +11,13 @@
     <AssemblyName>Mockingbird.Payment_uk_barclays_ecrutilatl</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
+    <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
@@ -34,6 +35,9 @@
     <ApplicationIcon>acrelec_icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Acrelec.Library.Logger">
+      <HintPath>..\..\..\Acrelec.Mockingbird.Core\Acrelec.Library.Logger.dll</HintPath>
+    </Reference>
     <Reference Include="Mockingbird.Feather, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Acrelec.Mockingbird.Core\Mockingbird.Feather.dll</HintPath>

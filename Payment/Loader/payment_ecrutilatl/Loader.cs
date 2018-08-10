@@ -63,7 +63,7 @@ namespace Acrelec.Mockingbird.Payment
                     //    ControlType = SettingDataType.SerialPortSelection,
                     //    ControlName = "COM Port number",
                     //    RealName = "Port",
-                    //    CurrentValue = "",
+                    //    CurrentValue = "5190",
                     //    ControlDescription = "Serial communication port for the EFT terminal (IPP350)"
                     //},
                     //new AdminPeripheralSetting()

@@ -40,7 +40,7 @@ namespace Acrelec.Mockingbird.Payment.Contracts
         //[DataMember]
         //public bool ForceOnline { get; set; }
 
-      
+
 
         public static RuntimeConfiguration Instance { get; set; }
     }

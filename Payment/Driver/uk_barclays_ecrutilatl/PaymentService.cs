@@ -139,16 +139,16 @@ namespace Acrelec.Mockingbird.Payment
                     data.PaidAmount = amount;
 
                     //check if a swipe card used reverse the
-                    //if (payResponse.EntryMethod == "2")
-                    //{
+                    if (payResponse.EntryMethod == "2")
+                    {
 
-                    //    Log.Info("This transaction requires  a signature. We will reverse it");
-                    //    var ReverseResult = api.Reverse(amount, out var ReverseResponse);
+                        Log.Info("This transaction requires  a signature. We will reverse it");
+                        var ReverseResult = api.Reverse(amount, out var ReverseResponse);
 
-                    //    Log.Info($"Reverse Result: {ReverseResponse}");
-                    //    Log.Info($"Reverse Response Data: { Utils.GetTransactionOutResult(ReverseResponse.TransactionStatus)}");
-                    //    return new Result<PaymentData>(ResultCode.TransactionCancelled, data: data);
-                    //}
+                        Log.Info($"Reverse Result: {ReverseResponse}");
+                        Log.Info($"Reverse Response Data: { Utils.GetTransactionOutResult(ReverseResponse.TransactionStatus)}");
+                        return new Result<PaymentData>(ResultCode.TransactionCancelled, data: data);
+                    }
 
 
                     //create customer receipt
@@ -217,8 +217,8 @@ namespace Acrelec.Mockingbird.Payment
                 StringBuilder merchantReceipt = new StringBuilder();
 
                 //get the reponse details for the ticket
-               // customerReceipt.Append($"\nCUSTOMER RECEIPT\n");
-               // customerReceipt.Append($"================\n\n");
+                customerReceipt.Append($"\nCUSTOMER RECEIPT\n");
+                customerReceipt.Append($"================\n\n");
                 customerReceipt.Append($"MERCHANT NAME:  {result.MerchantName}\n");         
                 customerReceipt.Append($"MERCHANT ADDR1: {result.MerchantAddress1}\n");   
                 customerReceipt.Append($"MERCHANT ADDR2: {result.MerchantAddress2}\n");    

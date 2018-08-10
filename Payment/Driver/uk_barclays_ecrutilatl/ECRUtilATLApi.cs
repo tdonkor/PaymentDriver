@@ -15,21 +15,27 @@ namespace Acrelec.Mockingbird.Payment
 {
     public class ECRUtilATLApi: IDisposable
     {
-        TerminalIPAddress termimalIPAddress;
-        StatusClass termimalStatus;
-        InitTxnReceiptPrint initTxnReceiptPrint;
-        TransactionClass transaction;
-        GetTerminalStatus getTerminalStatus;
-        TransactionResponse transactionResponse;
-        TimeDateClass setTimeDate;
-        GetAcquirerListClass getAcquirerList;
+         TerminalIPAddress termimalIPAddress;
+         StatusClass termimalStatus;
+         InitTxnReceiptPrint initTxnReceiptPrint;
+         TransactionClass transaction;
+         TimeDateClass timeDate;
+         TransactionResponse transactionResponse;
+       
+         SignatureClass checkSignature;
+         VoiceReferralClass checkVoiceReferral;
+         Thread SignatureVerificationThread;
+         Thread VoiceReferralThread;
+        //// GetTerminalStatus getTerminalStatus;
+        ////TimeDateClass setTimeDate;
+        //GetAcquirerListClass getAcquirerList;
         SettlementClass getSettlement;
         SettlementRequest settlementRequest;
-        SignatureClass checkSignature;
-        VoiceReferralClass checkVoiceReferral;
+        string tranStatus = "Not Authorised";
+        string tranType = "Non Sale";
 
-        Thread SignatureVerificationThread;
-        Thread VoiceReferralThread;
+
+
 
 
         /// <summary>
@@ -38,13 +44,8 @@ namespace Acrelec.Mockingbird.Payment
         public ECRUtilATLApi()
         {
             transaction = new TransactionClass();
-            termimalStatus = new StatusClass();
-            getTerminalStatus = new GetTerminalStatus();
-            setTimeDate = new TimeDateClass();
-            getAcquirerList = new GetAcquirerListClass();
-            getSettlement = new SettlementClass();
-            checkSignature = new SignatureClass();
-            checkVoiceReferral = new VoiceReferralClass();
+          
+
         }
 
         public void Dispose()
@@ -69,17 +70,18 @@ namespace Acrelec.Mockingbird.Payment
             termimalIPAddress.SetIPAddress();
 
             // check the status is at IDLE
-            getTerminalStatus = new GetTerminalStatus();
+            string status = string.Empty;
+            termimalStatus = new StatusClass();
 
-            //log the status
-            Log.Info($"status = {getTerminalStatus.GetTheTerminalStatus()}");
+            termimalStatus.GetTerminalState();
+            Log.Info($"Check Terminal at Idle: {Utils.DisplayTerminalStatus(Convert.ToInt16(termimalStatus.StateOut))}");
 
+            //getTerminalStatus = new GetTerminalStatus();
 
             // disable the receipt Printing
             initTxnReceiptPrint = new InitTxnReceiptPrint();
             initTxnReceiptPrint.StatusIn = (short)TxnReceiptState.TXN_RECEIPT_DISABLED;
             initTxnReceiptPrint.SetTxnReceiptPrintStatus();
-
 
             //check printing disabled
             if ((int.Parse(initTxnReceiptPrint.DiagRequestOut) == 0))
@@ -87,12 +89,23 @@ namespace Acrelec.Mockingbird.Payment
             else
                 Log.Info("apiInitTxnReceiptPrint ON");
 
-            //check time is set4
-            SetTime();
+            ////check time is
+            timeDate = new TimeDateClass();
 
-            //check theconnection  result 
+            timeDate.YearIn = DateTime.Now.Year.ToString();
+            timeDate.MonthIn = DateTime.Now.Month.ToString();
+            timeDate.DayIn = DateTime.Now.Day.ToString();
+            timeDate.HourIn = DateTime.Now.Hour.ToString();
+            timeDate.MinuteIn = DateTime.Now.Minute.ToString();
+            timeDate.SecondIn = DateTime.Now.Second.ToString();
+
+            timeDate.SetTimeDate();
+
+            //check the connection result 
             return (ECRUtilATLErrMsg)Convert.ToInt32(termimalIPAddress.DiagRequestOut);
         }
+
+       
 
         /// <summary>
         /// Disconect 
@@ -101,8 +114,6 @@ namespace Acrelec.Mockingbird.Payment
         {
             Log.Info("Disconnecting...Reset the transaction");
             transaction.Reset();
-            // log the status
-            Log.Info($"status = {getTerminalStatus.GetTheTerminalStatus()}");
 
             ECRUtilATLErrMsg disconnResult = ECRUtilATLErrMsg.UknownValue;
 
@@ -134,6 +145,7 @@ namespace Acrelec.Mockingbird.Payment
 
             // Transaction Sale details
             //
+           
             DoTransaction(amount, TransactionType.Sale.ToString());
 
             result = PopulateResponse(transaction);
@@ -168,11 +180,10 @@ namespace Acrelec.Mockingbird.Payment
         {
             Log.Info("Printing end of day report...");
 
-            //Get Acquirer List
-            getAcquirerList.Launch();
+           // Get Acquirer List
+          // getAcquirerList.Launch();
 
-            //do the settlement
-
+           // do the settlement
             getSettlement.AcquirerIndexIn = settlementRequest.AcquirerIndex;
             getSettlement.SettlementParamIn = (short)settlementRequest.SettlementParameter;
             getSettlement.DoSettlement();
@@ -180,52 +191,32 @@ namespace Acrelec.Mockingbird.Payment
             if ((ECRUtilATLErrMsg)(Convert.ToInt32(getSettlement.DiagRequestOut)) == ECRUtilATLErrMsg.OK)
                 return getSettlement;
             else return null;
-
         }
+ 
 
-        /// <summary>
-        /// Set the Ped Time
-        /// </summary>
-        /// <returns></returns>
-        public string SetTime()
-        {
-            setTimeDate.DayIn = DateTime.Now.Day.ToString();
-            setTimeDate.MonthIn = DateTime.Now.Month.ToString();
-            setTimeDate.YearIn = DateTime.Now.Year.ToString();
-            setTimeDate.DayIn = DateTime.Now.Day.ToString();
-            setTimeDate.HourIn = DateTime.Now.Hour.ToString();
-            setTimeDate.MinuteIn = DateTime.Now.Minute.ToString();
-            setTimeDate.SecondIn = DateTime.Now.Second.ToString();
-
-            setTimeDate.SetTimeDate();
-
-            Log.Info($"\tDateTime: {setTimeDate.DayIn}:{setTimeDate.MonthIn}:{ setTimeDate.YearIn}:{ setTimeDate.HourIn}:{ setTimeDate.MinuteIn}:{setTimeDate.SecondIn}");
-            return Utils.DisplayDiagReqOutput(Convert.ToInt32(setTimeDate.DiagRequestOut));
-        }
-       
         /// <summary>
         ///  Do the transaction
         /// </summary>
         /// <param name="amount"></param>
         /// <param name="transactionType"></param>
-        private void DoTransaction(int amount, string transactionType)
+        public void DoTransaction(int amount, string transactionType)
         {
             Random randomNum = new Random();
+            Log.Info($"Selected Transaction type: {Utils.GetSelectedTransaction(transactionType).ToString()}");
 
             transaction.MessageNumberIn = randomNum.Next(100).ToString();
             transaction.TransactionTypeIn = Utils.GetSelectedTransaction(transactionType).ToString();
-            Log.Info($"Selected Transaction type: {Utils.GetSelectedTransaction(transactionType).ToString()}");
             transaction.Amount1In = amount.ToString();
-            transaction.Amount1LabelIn = "Amount 1";
-            transaction.Amount2In = "0";
-            transaction.Amount2LabelIn = "Amount 2";
-            transaction.Amount3In = "0";
-            transaction.Amount3LabelIn = "Amount 3";
-            transaction.Amount4In = "0";
-            transaction.Amount4LabelIn = "Amount 4";
-            transaction.ReferenceIn = string.Empty;
-            transaction.TransactionIDIn = string.Empty;
-            transaction.AuthorizationCodeIn = string.Empty;
+            transaction.Amount1LabelIn = "Amount1";
+            transaction.Amount2In = "";
+            transaction.Amount2LabelIn = "";
+            transaction.Amount3In = "";
+            transaction.Amount3LabelIn = "";
+            transaction.Amount4In = "";
+            transaction.Amount4LabelIn = "";
+            transaction.ReferenceIn = "";
+            transaction.TransactionIDIn = "";
+            transaction.AuthorizationCodeIn = "";
             transaction.OfferPWCBIn = (short)OfferPWCBState.PWCB_DISABLED;
 
             //set signature verification
@@ -240,32 +231,70 @@ namespace Acrelec.Mockingbird.Payment
 
             // Trying to abort the signature verification thread if it is alive
             try { SignatureVerificationThread.Abort(); }
-            catch (Exception ThreadException) { Console.WriteLine(ThreadException.StackTrace); }
+            catch (Exception ThreadException) { Log.Error(ThreadException.StackTrace); }
             SignatureVerificationThread = null;
 
             // Trying to abort the voice referral authorisation thread if it is alive
             try { VoiceReferralThread.Abort(); }
-            catch (Exception ThreadException) { Console.WriteLine(ThreadException.StackTrace); }
+            catch (Exception ThreadException) { Log.Error(ThreadException.StackTrace); }
             VoiceReferralThread = null;
+
+            Log.Info($"Transaction Card scheme out: {transaction.CardSchemeNameOut}");
+            Log.Info($"Transaction CVM out: {transaction.CVMOut}");
+            Log.Info($"Transaction Entry Method out:{transaction.EntryMethodOut}");
+            Log.Info($"Transaction Total amount: £{transaction.TotalTransactionAmountOut}");
+            Log.Info($"Transaction  Terminal Identity out: {transaction.TerminalIdentityOut}");
+            if (transaction.TransactionStatusOut == "0")
+            {
+                tranStatus = "Authorised";
+            }
+            Log.Info($"Transaction Status out: {tranStatus}");
+            if (transaction.TransactionTypeOut == "00")
+            {
+                tranType = "Sale";
+            }
+            Log.Info($"Transaction Type out: {tranType}");
+            Log.Info($"Transaction DiagRequest out: {transaction.DiagRequestOut}");
+            Log.Info($"Transaction AuthorizationCode out: {transaction.AuthorizationCodeOut}");
+            Log.Info($"Transaction HostMessage out: {transaction.HostMessageOut}\n\n");
+            Log.Info($"Signature Card scheme out: {checkSignature.CardSchemeNameOut}");
+            Log.Info($"Signature CVM out: {checkSignature.CVMOut}");
+            Log.Info($"Signature Entry Method out:{checkSignature.EntryMethodOut}");
+            Log.Info($"Signature Total amount: {checkSignature.TotalTransactionAmountOut}");
+            Log.Info($"Signature TerminalIdentity out: {checkSignature.TerminalIdentityOut}");
+            Log.Info($"Signature TransactionType out {checkSignature.TransactionTypeOut}");
+            Log.Info($"Signature DiagRequest out: {transaction.DiagRequestOut}");
+            Log.Info($"Signature AuthorizationCode out: {checkSignature.AuthorizationCodeOut}");
+            Log.Info($"Signature HostMessage out: {checkSignature.HostMessageOut}");
+            Log.Info($"Signature Card scheme out: {checkSignature.CardSchemeNameOut}");
+            Log.Info($"Signature CVM out: {checkSignature.CVMOut}");
+            Log.Info($"Signature Entry Method out:{checkSignature.EntryMethodOut}");
+            Log.Info($"Signature Total amount: {checkSignature.TotalTransactionAmountOut}");
+            Log.Info($"Signature TerminalIdentity out: {checkSignature.TerminalIdentityOut}");
+            Log.Info($"Signature TransactionType out {checkSignature.TransactionTypeOut}");
+            Log.Info($"Signature DiagRequest out: {transaction.DiagRequestOut}");
+            Log.Info($"Signature AuthorizationCode out: {checkSignature.AuthorizationCodeOut}");
+            Log.Info($"Signature HostMessage out: {checkSignature.HostMessageOut}");
 
         }
 
 
         public void SignatureVerification()
         {
-            string CheckSignatureStatus = string.Empty;
-
-            Log.Info("Running checkSignature.CheckSignReq()");
-            checkSignature.CheckSignReq();
-            
             //local variables
             int ret = 0;
+            string CheckSignatureStatus = string.Empty;
 
-            if (transaction.EntryMethodOut == "2")
-            {
-                SignatureVerificationThread.Abort();
-                Log.Info(" SignatureVerificationThread Aborted");
-            }
+            checkSignature = new SignatureClass();
+            checkSignature.CheckSignReq();
+
+            Log.Info("Running Check Signature");
+
+            //if (transaction.EntryMethodOut == "2")
+            //{
+            //    SignatureVerificationThread.Abort();
+            //    Log.Info(" SignatureVerificationThread Aborted");
+            //}
            
 
             ret = Int32.Parse(checkSignature.DiagRequestOut);
@@ -279,7 +308,7 @@ namespace Acrelec.Mockingbird.Payment
                 case 3: CheckSignatureStatus = "Bad Request Size"; break;      // RET_BAD_REQUEST_SIZE
                 case 4: CheckSignatureStatus = "Bad Request Format"; break;    // RET_BAD_REQUEST_FORMAT
                 case 8: CheckSignatureStatus = "Ped Not Auth"; break;          // RET_PED_NOT_AUTHENTICATED
-                default: CheckSignatureStatus = "Unknown Status"; break;       // Unknown Status
+                default:CheckSignatureStatus = "Unknown Status"; break;       // Unknown Status
             }
 
             if (ret != 0) //Error Case
@@ -299,10 +328,10 @@ namespace Acrelec.Mockingbird.Payment
 
         public void VoiceReferralAuthorisation()
         {
-            
 
+            checkVoiceReferral = new VoiceReferralClass();
             checkVoiceReferral.CheckVoiceReferralReq();
-            Console.WriteLine($"checkVoiceReferral out: {checkVoiceReferral.DiagRequestOut}");
+            Log.Info($"checkVoiceReferral out: {checkVoiceReferral.DiagRequestOut}");
 
             //decline the voice referral 
             checkVoiceReferral.AuthorisationStatusIn = 1; // Decline
@@ -311,13 +340,14 @@ namespace Acrelec.Mockingbird.Payment
             checkVoiceReferral = null;
         }
 
-            /// <summary>
-            /// Populate the transaction response Object
-            /// </summary>
-            /// <param name="transaction"></param>
-            /// <returns>transactionResponse</returns>
+        /// <summary>
+        /// Populate the transaction response Object
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <returns>transactionResponse</returns>
         private TransactionResponse PopulateResponse(TransactionClass transaction)
         {
+            Log.Info("Populating Transaction Response");
 
             transactionResponse.AcquirerMerchantID = transaction.AcquirerMerchantIDOut;
             transactionResponse.MerchantAddress1 = transaction.MerchantAddress1Out;
