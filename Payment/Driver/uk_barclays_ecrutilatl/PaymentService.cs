@@ -9,6 +9,7 @@ using System.Reflection;
 using System.ServiceModel;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using System.Security.Permissions;
 
 namespace Acrelec.Mockingbird.Payment
 {
@@ -16,7 +17,6 @@ namespace Acrelec.Mockingbird.Payment
     public class PaymentService : IPaymentService
     {
         private static readonly string ticketPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "ticket");
-       
 
         /// <summary>
         /// Get the configuratiion data
@@ -96,7 +96,7 @@ namespace Acrelec.Mockingbird.Payment
         public Result<PaymentData> Pay(int amount)
         {
             Log.Info("Pay method started...");
-            Log.Info($"Amount = {amount}.");
+            Log.Info($"Amount = {amount/100.0}.");
 
             try
             {
@@ -129,7 +129,7 @@ namespace Acrelec.Mockingbird.Payment
 
                     var payResult = api.Pay(amount, out var payResponse);
                     Log.Info($"Pay Result: {payResult}");
-                    Log.Info($"Pay Response Data: { Utils.GetTransactionOutResult(payResponse.TransactionStatus)}");
+                    Log.Info($"Pay Response Data: {Utils.GetTransactionOutResult(payResponse.TransactionStatus)}");
 
                     if (payResult != ECRUtilATLErrMsg.OK)
                     {
@@ -145,7 +145,6 @@ namespace Acrelec.Mockingbird.Payment
                         Log.Info("This transaction requires  a signature. We will reverse it");
                         var ReverseResult = api.Reverse(amount, out var ReverseResponse);
 
-                        Log.Info($"Reverse Result: {ReverseResponse}");
                         Log.Info($"Reverse Response Data: { Utils.GetTransactionOutResult(ReverseResponse.TransactionStatus)}");
                         return new Result<PaymentData>(ResultCode.TransactionCancelled, data: data);
                     }
@@ -154,7 +153,7 @@ namespace Acrelec.Mockingbird.Payment
                     //create customer receipt
                     if ((ECRUtilATLErrMsg) Convert.ToInt32(payResponse.DiagRequestOut) == ECRUtilATLErrMsg.OK)    
                         {
-                        Log.Info($"transaction status: {payResponse.TransactionStatus}");
+                        Log.Info($"transaction status: {Utils.DiagTxnStatus(payResponse.TransactionStatus)}");
                         if (Utils.GetTransactionOutResult(payResponse.TransactionStatus) == TransactiontResult.Successful)
                         {
                             CreateCustomerTicket(payResponse);
@@ -183,8 +182,6 @@ namespace Acrelec.Mockingbird.Payment
                 Log.Info("Pay method finished.");
             }
         }
-
-        
 
         /// <summary>
         /// Shutdown
@@ -268,8 +265,8 @@ namespace Acrelec.Mockingbird.Payment
                 merchantReceipt.Append($"{Utils.DiagTxnStatus(result.TransactionStatus)}\n");
                 merchantReceipt.Append("***********************\n");
 
-                Log.Info("Persisting ticket to {0}", outputPath);
-                ////Write the new ticket
+                Log.Info("Persisting Customer and Merchant ticket to {0}", outputPath);
+                //Write the new ticket
                 File.WriteAllText(outputPath, customerReceipt.ToString() + merchantReceipt.ToString());
             }
             catch (Exception ex)
@@ -280,17 +277,17 @@ namespace Acrelec.Mockingbird.Payment
         }
 
         /// <summary>
-        /// 
+        /// Create Customer Ticket
         /// </summary>
         /// <param name="ticket"></param>
         private static void CreateCustomerTicket(TransactionResponse ticket)
         {
-            StringBuilder ticketContent = new StringBuilder();
+            StringBuilder ticketContent  = new StringBuilder();
 
             //get the reponse details for the ticket
-            //ticketContent.Append($"CUSTOMER RECEIPT\n");
-            //ticketContent.Append($"================\n\n");
-
+         
+            ticketContent.Append($"CUSTOMER RECEIPT\n");
+            ticketContent.Append($"================\n\n");
             ticketContent.Append($"{ticket.MerchantName}\n");         // Merchant name
             ticketContent.Append($"{ticket.MerchantAddress1}\n");     // Merchant Addr1
             ticketContent.Append($"{ticket.MerchantAddress2}\n");     // Merchant Addr2
@@ -315,8 +312,9 @@ namespace Acrelec.Mockingbird.Payment
 
             try
             {
-                Log.Info("Persisting Customer ticket to {0}", ticketPath);
-                ////Write the new ticket
+                Log.Info($"Persisting Customer ticket to {ticketPath}");
+
+                //Write the new ticket
                 File.WriteAllText(ticketPath, ticketContent.ToString());
             }
             catch (Exception ex)

@@ -15,27 +15,18 @@ namespace Acrelec.Mockingbird.Payment
 {
     public class ECRUtilATLApi: IDisposable
     {
-         TerminalIPAddress termimalIPAddress;
-         StatusClass termimalStatus;
-         InitTxnReceiptPrint initTxnReceiptPrint;
-         TransactionClass transaction;
-         TimeDateClass timeDate;
-         TransactionResponse transactionResponse;
-       
-         SignatureClass checkSignature;
-         VoiceReferralClass checkVoiceReferral;
-         Thread SignatureVerificationThread;
-         Thread VoiceReferralThread;
-        //// GetTerminalStatus getTerminalStatus;
-        ////TimeDateClass setTimeDate;
-        //GetAcquirerListClass getAcquirerList;
+        TerminalIPAddress termimalIPAddress;
+        StatusClass termimalStatus;
+        InitTxnReceiptPrint initTxnReceiptPrint;
+        TransactionClass transaction;
+        TimeDateClass timeDate;
+        TransactionResponse transactionResponse;
+        SignatureClass checkSignature;
+        VoiceReferralClass checkVoiceReferral;
+        Thread SignatureVerificationThread;
+        Thread VoiceReferralThread;
         SettlementClass getSettlement;
         SettlementRequest settlementRequest;
-        string tranStatus = "Not Authorised";
-        string tranType = "Non Sale";
-
-
-
 
 
         /// <summary>
@@ -44,8 +35,6 @@ namespace Acrelec.Mockingbird.Payment
         public ECRUtilATLApi()
         {
             transaction = new TransactionClass();
-          
-
         }
 
         public void Dispose()
@@ -72,11 +61,9 @@ namespace Acrelec.Mockingbird.Payment
             // check the status is at IDLE
             string status = string.Empty;
             termimalStatus = new StatusClass();
-
             termimalStatus.GetTerminalState();
             Log.Info($"Check Terminal at Idle: {Utils.DisplayTerminalStatus(Convert.ToInt16(termimalStatus.StateOut))}");
 
-            //getTerminalStatus = new GetTerminalStatus();
 
             // disable the receipt Printing
             initTxnReceiptPrint = new InitTxnReceiptPrint();
@@ -89,9 +76,8 @@ namespace Acrelec.Mockingbird.Payment
             else
                 Log.Info("apiInitTxnReceiptPrint ON");
 
-            ////check time is
+            //Set the time 
             timeDate = new TimeDateClass();
-
             timeDate.YearIn = DateTime.Now.Year.ToString();
             timeDate.MonthIn = DateTime.Now.Month.ToString();
             timeDate.DayIn = DateTime.Now.Day.ToString();
@@ -108,7 +94,7 @@ namespace Acrelec.Mockingbird.Payment
        
 
         /// <summary>
-        /// Disconect 
+        /// Disconect the transaction
         /// </summary>
         public ECRUtilATLErrMsg Disconnect()
         {
@@ -127,7 +113,7 @@ namespace Acrelec.Mockingbird.Payment
         }
 
         /// <summary>
-        /// The Payment
+        /// The transaction Payment
         /// </summary>
         /// <param name="amount"></param>
         /// <param name="result"></param>
@@ -135,7 +121,7 @@ namespace Acrelec.Mockingbird.Payment
         public ECRUtilATLErrMsg Pay(int amount, out TransactionResponse result)
         {
             int intAmount;
-            Log.Info($"Executing payment - Amount: {amount}");
+            Log.Info($"Executing payment - Amount: {amount/100.0}");
 
             //check amount is valid
             intAmount = Utils.GetNumericAmountValue(amount);
@@ -145,17 +131,22 @@ namespace Acrelec.Mockingbird.Payment
 
             // Transaction Sale details
             //
-           
             DoTransaction(amount, TransactionType.Sale.ToString());
 
             result = PopulateResponse(transaction);
             return (ECRUtilATLErrMsg)Convert.ToInt32(transaction.DiagRequestOut);
         }
 
+        /// <summary>
+        /// Payment Reversal
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public ECRUtilATLErrMsg Reverse(int amount, out TransactionResponse result)
         {
             int intAmount;
-            Log.Info($"Executing Reversal - Amount: {amount}");
+            Log.Info($"Executing Reversal - Amount: {amount/100.0}");
 
             //check amount is valid
             intAmount = Utils.GetNumericAmountValue(amount);
@@ -180,10 +171,13 @@ namespace Acrelec.Mockingbird.Payment
         {
             Log.Info("Printing end of day report...");
 
-           // Get Acquirer List
-          // getAcquirerList.Launch();
+            // Get Acquirer List
+            // getAcquirerList.Launch();
 
-           // do the settlement
+            getSettlement = new SettlementClass();
+            settlementRequest = new SettlementRequest();
+
+            // do the settlement
             getSettlement.AcquirerIndexIn = settlementRequest.AcquirerIndex;
             getSettlement.SettlementParamIn = (short)settlementRequest.SettlementParameter;
             getSettlement.DoSettlement();
@@ -202,8 +196,8 @@ namespace Acrelec.Mockingbird.Payment
         public void DoTransaction(int amount, string transactionType)
         {
             Random randomNum = new Random();
-            Log.Info($"Selected Transaction type: {Utils.GetSelectedTransaction(transactionType).ToString()}");
-
+            Log.Info($"Selected Transaction type:{Utils.GetSelectedTransaction(transactionType).ToString()}");
+          
             transaction.MessageNumberIn = randomNum.Next(100).ToString();
             transaction.TransactionTypeIn = Utils.GetSelectedTransaction(transactionType).ToString();
             transaction.Amount1In = amount.ToString();
@@ -240,45 +234,15 @@ namespace Acrelec.Mockingbird.Payment
             VoiceReferralThread = null;
 
             Log.Info($"Transaction Card scheme out: {transaction.CardSchemeNameOut}");
-            Log.Info($"Transaction CVM out: {transaction.CVMOut}");
-            Log.Info($"Transaction Entry Method out:{transaction.EntryMethodOut}");
-            Log.Info($"Transaction Total amount: £{transaction.TotalTransactionAmountOut}");
-            Log.Info($"Transaction  Terminal Identity out: {transaction.TerminalIdentityOut}");
-            if (transaction.TransactionStatusOut == "0")
-            {
-                tranStatus = "Authorised";
-            }
-            Log.Info($"Transaction Status out: {tranStatus}");
-            if (transaction.TransactionTypeOut == "00")
-            {
-                tranType = "Sale";
-            }
-            Log.Info($"Transaction Type out: {tranType}");
-            Log.Info($"Transaction DiagRequest out: {transaction.DiagRequestOut}");
-            Log.Info($"Transaction AuthorizationCode out: {transaction.AuthorizationCodeOut}");
-            Log.Info($"Transaction HostMessage out: {transaction.HostMessageOut}\n\n");
-            Log.Info($"Signature Card scheme out: {checkSignature.CardSchemeNameOut}");
-            Log.Info($"Signature CVM out: {checkSignature.CVMOut}");
-            Log.Info($"Signature Entry Method out:{checkSignature.EntryMethodOut}");
-            Log.Info($"Signature Total amount: {checkSignature.TotalTransactionAmountOut}");
-            Log.Info($"Signature TerminalIdentity out: {checkSignature.TerminalIdentityOut}");
-            Log.Info($"Signature TransactionType out {checkSignature.TransactionTypeOut}");
-            Log.Info($"Signature DiagRequest out: {transaction.DiagRequestOut}");
-            Log.Info($"Signature AuthorizationCode out: {checkSignature.AuthorizationCodeOut}");
-            Log.Info($"Signature HostMessage out: {checkSignature.HostMessageOut}");
-            Log.Info($"Signature Card scheme out: {checkSignature.CardSchemeNameOut}");
-            Log.Info($"Signature CVM out: {checkSignature.CVMOut}");
-            Log.Info($"Signature Entry Method out:{checkSignature.EntryMethodOut}");
-            Log.Info($"Signature Total amount: {checkSignature.TotalTransactionAmountOut}");
-            Log.Info($"Signature TerminalIdentity out: {checkSignature.TerminalIdentityOut}");
-            Log.Info($"Signature TransactionType out {checkSignature.TransactionTypeOut}");
-            Log.Info($"Signature DiagRequest out: {transaction.DiagRequestOut}");
-            Log.Info($"Signature AuthorizationCode out: {checkSignature.AuthorizationCodeOut}");
-            Log.Info($"Signature HostMessage out: {checkSignature.HostMessageOut}");
-
+            Log.Info($"Transaction CVM out: {Utils.CardVerification(transaction.CVMOut)}");
+            Log.Info($"Transaction Entry Method out:{Utils.CardEntryMethod(transaction.EntryMethodOut)}");
+            Log.Info($"Transaction Total amount: £{Convert.ToSingle(transaction.TotalTransactionAmountOut)/100.0}");
+            Log.Info($"Transaction Terminal Identity out: {transaction.TerminalIdentityOut}");           
         }
 
-
+        /// <summary>
+        /// Verify Signature
+        /// </summary>
         public void SignatureVerification()
         {
             //local variables
@@ -290,12 +254,6 @@ namespace Acrelec.Mockingbird.Payment
 
             Log.Info("Running Check Signature");
 
-            //if (transaction.EntryMethodOut == "2")
-            //{
-            //    SignatureVerificationThread.Abort();
-            //    Log.Info(" SignatureVerificationThread Aborted");
-            //}
-           
 
             ret = Int32.Parse(checkSignature.DiagRequestOut);
             Log.Info($" checkSignature = {ret}");
@@ -321,8 +279,7 @@ namespace Acrelec.Mockingbird.Payment
                 checkSignature.SignatureStatusIn = 2; //assign
                 checkSignature.SetSignStatus();
                 Log.Info($" SetSignStatus = {checkSignature.DiagRequestOut}");
-            }
-             
+            }            
         }
 
 
