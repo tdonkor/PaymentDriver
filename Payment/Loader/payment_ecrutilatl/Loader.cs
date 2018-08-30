@@ -63,7 +63,7 @@ namespace Acrelec.Mockingbird.Payment
                     //    ControlType = SettingDataType.SerialPortSelection,
                     //    ControlName = "COM Port number",
                     //    RealName = "Port",
-                    //    CurrentValue = "5190",
+                    //    CurrentValue = "",
                     //    ControlDescription = "Serial communication port for the EFT terminal (IPP350)"
                     //},
                     //new AdminPeripheralSetting()
@@ -74,7 +74,7 @@ namespace Acrelec.Mockingbird.Payment
                     //    CurrentValue = "False",
                     //    ControlDescription = "Force online transaction"
                     //},
-                     new AdminPeripheralSetting()
+                    new AdminPeripheralSetting()
                     {
                         ControlType = SettingDataType.IpAddress,
                         ControlName = "IP Address",
@@ -82,6 +82,7 @@ namespace Acrelec.Mockingbird.Payment
                         CurrentValue = "1.1.1.2",
                         ControlDescription = "Static IP Address of the PED"
                     },
+
                     new AdminPeripheralSetting()
                     {
                         ControlType = SettingDataType.Int,
@@ -152,7 +153,7 @@ namespace Acrelec.Mockingbird.Payment
 
                 // Create communication channel
                 _logger.Info(Constants.LOG_FILE, "Creating channel factory...");
-                _channelFactory = new ChannelFactory<IPaymentService>(binding, 
+                _channelFactory = new ChannelFactory<IPaymentService>(binding,
                     new EndpointAddress($"net.pipe://localhost/{Constants.NAME}"));
 
                 var parameters = _currentPaymentInitConfig.ConfigurationSettings.ToDictionary(_ => _.RealName, _ => _.CurrentValue);
@@ -243,7 +244,7 @@ namespace Acrelec.Mockingbird.Payment
                 {
                     var result = proxy.Test();
 
-                    LastStatus = result == ResultCode.Success ? 
+                    LastStatus = result == ResultCode.Success ?
                         PeripheralStatus.PeripheralOK() : PeripheralStatus.PeripheralGenericError();
 
                     if (result != ResultCode.Success)
@@ -282,9 +283,6 @@ namespace Acrelec.Mockingbird.Payment
 
                 _logger.Debug(Constants.LOG_FILE, $"PayRequest: {JsonConvert.SerializeObject(payRequest)}");
 
-                //Init the paid amount and Tender Media
-                payDetails = new PayDetails();
-
                 Result<PaymentData> result;
 
                 var proxy = _channelFactory.CreateChannel();
@@ -293,22 +291,11 @@ namespace Acrelec.Mockingbird.Payment
                     result = proxy.Pay(payRequest.Amount);
                 }
 
-                //Check the status property of the parameters object to see if the Pay was successful
-                if (result.ResultCode == ResultCode.Success && result.Data.Result == PaymentResult.Successful)
+                payDetails = new PayDetails
                 {
-                    _logger.Info(Constants.LOG_FILE, "Payment has been succeeded.");
-
-                    LastStatus = PeripheralStatus.PeripheralOK();
-
-                    //Update the payment details with the ones received from the payment terminal
-                    //payDetails.TenderMediaId = result.Data.TenderMediaId;
-                    payDetails.PaidAmount = result.Data.PaidAmount;
-                    payDetails.HasClientReceipt = result.Data.HasClientReceipt;
-                }
-                else
-                {
-                    _logger.Info(Constants.LOG_FILE, "Payment has been failed.");
-                }
+                    PaidAmount = result.Data?.PaidAmount ?? 0,
+                    HasClientReceipt = result.Data?.HasClientReceipt ?? false
+                };
 
                 specificStatusDetails = new SpecificStatusDetails()
                 {
@@ -316,7 +303,19 @@ namespace Acrelec.Mockingbird.Payment
                     Description = result.Message
                 };
 
-                return result.ResultCode == ResultCode.Success && result.Data.Result == PaymentResult.Successful;
+                //Check the status property of the parameters object to see if the Pay was successful
+                if (result.ResultCode == ResultCode.Success && result.Data?.Result == PaymentResult.Successful)
+                {
+                    _logger.Info(Constants.LOG_FILE, "Payment has been succeeded.");
+
+                    LastStatus = PeripheralStatus.PeripheralOK();
+                    return true;
+                }
+                else
+                {
+                    _logger.Info(Constants.LOG_FILE, "Payment has been failed.");
+                    return false;
+                }
             }
             catch (Exception ex)
             {

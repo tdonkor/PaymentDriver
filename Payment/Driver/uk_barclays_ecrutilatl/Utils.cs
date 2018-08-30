@@ -75,7 +75,7 @@ namespace Acrelec.Mockingbird.Payment
         PEDNotAuthenticated = 8,
         UknownValue = 9
     }
-    public enum TransactiontResult
+    public enum TransactionResult
     {
         Successful = 48,
         Cancelled = 54,
@@ -278,14 +278,14 @@ namespace Acrelec.Mockingbird.Payment
             return result;
         }
 
-        public static TransactiontResult GetTransactionOutResult(string transactionStatusOut)
+        public static TransactionResult GetTransactionOutResult(string transactionStatusOut)
         {
-            TransactiontResult result;
+            TransactionResult result;
 
             switch (transactionStatusOut)
             {
                 case "0":
-                    result = TransactiontResult.Successful;
+                    result = TransactionResult.Successful;
                     break;
                 case "1":
                 case "2":
@@ -293,13 +293,13 @@ namespace Acrelec.Mockingbird.Payment
                 case "4":
                 case "5":
                 case "6":
-                    result = TransactiontResult.Failed;
+                    result = TransactionResult.Failed;
                     break;
                 case "7":
-                    result = TransactiontResult.Cancelled;
+                    result = TransactionResult.Cancelled;
                     break;
                 default:
-                    result = TransactiontResult.RequestReceived;
+                    result = TransactionResult.RequestReceived;
                     break;
             }
             return result;

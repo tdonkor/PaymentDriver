@@ -97,6 +97,7 @@ namespace Acrelec.Mockingbird.Payment
         {
             Log.Info("Pay method started...");
             Log.Info($"Amount = {amount/100.0}.");
+            Result<PaymentData> transactionResult = null;
 
             try
             {
@@ -120,6 +121,9 @@ namespace Acrelec.Mockingbird.Payment
                 using (var api = new ECRUtilATLApi())
                 {
                     var connectResult = api.Connect(config.IpAddress);
+                    var disconnectResult = ECRUtilATLErrMsg.OK;
+
+
                     Log.Info($"Connect Result: {connectResult}");
 
                     if (connectResult != ECRUtilATLErrMsg.OK)
@@ -135,42 +139,80 @@ namespace Acrelec.Mockingbird.Payment
                     {
                         return new Result<PaymentData>((ResultCode)connectResult);
                     }
+
                     data.Result = (PaymentResult)Utils.GetTransactionOutResult(payResponse.TransactionStatus);
+
+                    if (data.Result != PaymentResult.Successful)
+                    {
+                        if (data.Result == PaymentResult.Failed)
+                        {
+                            Log.Info("Payment Failed.");
+
+                            //persist the transaction
+                            PersistTransaction(payResponse);
+
+                            //print the payment ticket for an error
+                            //
+                            CreateCustomerTicket("-----\n\nPayment failure with\nyour card or issuer\nNO payment has been taken.\n\nPlease try again with another card,\nor at a manned till.\n\n-----");
+                            data.HasClientReceipt = true;
+                        }
+                     
+                        return new Result<PaymentData>((ResultCode)payResult, data: data);
+                    }
+
                     data.PaidAmount = amount;
 
-                    //check if a swipe card used reverse the
+                    //check if a swipe card used reverse the transaction and cancel the transaction
                     if (payResponse.EntryMethod == "2")
                     {
 
-                        Log.Info("This transaction requires  a signature. We will reverse it");
+                        Log.Info("This transaction requires a signature. We will reverse it");
                         var ReverseResult = api.Reverse(amount, out var ReverseResponse);
 
                         Log.Info($"Reverse Response Data: { Utils.GetTransactionOutResult(ReverseResponse.TransactionStatus)}");
+
+                        //create customer error receipt
+                        //
+                        CreateCustomerTicket("-----\n\nPayment failure with\nyour card or issuer\nNO payment has been taken.\n\nPlease try again with another card,\nor at a manned till.\n\n-----");
+
+                        //persist the transaction for records
+                        PersistTransaction(ReverseResponse);
+
+                        data.PaidAmount = 0;
+                        data.HasClientReceipt = true;
+
+                        //cancel the transaction
+                        Log.Info("Cancelling the transaction");
+
                         return new Result<PaymentData>(ResultCode.TransactionCancelled, data: data);
+
                     }
 
-
-                    //create customer receipt
-                    if ((ECRUtilATLErrMsg) Convert.ToInt32(payResponse.DiagRequestOut) == ECRUtilATLErrMsg.OK)    
-                        {
+                    //create customer receipt if success
+                    if ((ECRUtilATLErrMsg)Convert.ToInt32(payResponse.DiagRequestOut) == ECRUtilATLErrMsg.OK)
+                    {
                         Log.Info($"transaction status: {Utils.DiagTxnStatus(payResponse.TransactionStatus)}");
-                        if (Utils.GetTransactionOutResult(payResponse.TransactionStatus) == TransactiontResult.Successful)
+
+                        if (Utils.GetTransactionOutResult(payResponse.TransactionStatus) == TransactionResult.Successful)
                         {
+                            Log.Info($"Transaction Successful");
+                            transactionResult = new Result<PaymentData>(ResultCode.Success, data: data);
+                            Log.Info("Payment succeeded.");
+
                             CreateCustomerTicket(payResponse);
                             data.HasClientReceipt = true;
                         }
                     }
 
-                   //persist the transaction
-                   PersistTransaction(payResponse);
+                    //persist the transaction
+                    PersistTransaction(payResponse);
 
-                    var disconnectResult = api.Disconnect();
+                    disconnectResult = api.Disconnect();
                     Log.Info($"Disconnect Result: {disconnectResult}");
                 }
 
-                Log.Info("Payment succeeded.");
 
-                return new Result<PaymentData>(ResultCode.Success, data: data);
+                return transactionResult;
             }
             catch (Exception ex)
             {
@@ -276,8 +318,32 @@ namespace Acrelec.Mockingbird.Payment
             }
         }
 
+
+        //overload the customer ticket to check to return a string
+        // output on error
         /// <summary>
-        /// Create Customer Ticket
+        ///  Create Customer Ticket to output the reciept error string
+        /// </summary>
+        /// <param name="ticket"></param>
+        private static void CreateCustomerTicket(string ticket)
+        {
+            try
+            {
+                Log.Info($"Persisting Customer ticket to {ticketPath}");
+
+                //Write the new ticket
+                File.WriteAllText(ticketPath, ticket);
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error persisting ticket.");
+                Log.Error(ex);
+            }
+        }
+
+        /// <summary>
+        /// Create Customer Ticket to output the reciept
         /// </summary>
         /// <param name="ticket"></param>
         private static void CreateCustomerTicket(TransactionResponse ticket)
@@ -316,6 +382,7 @@ namespace Acrelec.Mockingbird.Payment
 
                 //Write the new ticket
                 File.WriteAllText(ticketPath, ticketContent.ToString());
+
             }
             catch (Exception ex)
             {
