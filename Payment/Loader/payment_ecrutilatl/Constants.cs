@@ -1,4 +1,4 @@
-﻿using Acrelec.Mockingbird.Feather.Enums;
+﻿using Acrelec.Mockingbird.Feather.Peripherals.Enums;
 
 namespace Acrelec.Mockingbird.Payment
 {
@@ -6,12 +6,16 @@ namespace Acrelec.Mockingbird.Payment
     {
         public const string ID = "82604";
 
-        public const string NAME = "UK_BARCLAYS_ECRUTILATL";
+        public const string PAYMENT_NAME = "UK_BARCLAYS_ECRUTILATL";
 
-        public const PeripheralType TYPE = PeripheralType.card;
+        public const string PAYMENT_APPLICATION_PROCESS_NAME = "PAY_UK_BARCLAYS_ECRUTILATL";
+
+        public const PeripheralType PAYMENT_TYPE = PeripheralType.card;
 
         public const string LOG_FILE = "Payment_uk_barclays_ecrutilatl";
 
-        public const string DRIVER_PATH = @"C:\Acrelec\Core\Peripherals\Payments\Drivers\pay_uk_barclays_ecrutilatl\PAY_UK_BARCLAYS_ECRUTILATL.exe";
+        public const string PAYMENT_APPLICATION_NAME = "PAY_UK_BARCLAYS_ECRUTILATL.exe";
+
+        public const string DRIVER_FOLDER_NAME = "DriverExe";
     }
 }

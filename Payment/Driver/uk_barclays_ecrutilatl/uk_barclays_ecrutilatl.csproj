@@ -57,9 +57,12 @@
     <StartupObject>Acrelec.Mockingbird.Payment.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Acrelec.Library.Logger, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Acrelec.Library.Logger, Version=1.0.0.3, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Acrelec.Mockingbird.Core\Acrelec.Library.Logger.dll</HintPath>
+    </Reference>
+    <Reference Include="Acrelec.Library.Pipes">
+      <HintPath>..\..\..\Acrelec.Mockingbird.Core\Acrelec.Library.Pipes.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />

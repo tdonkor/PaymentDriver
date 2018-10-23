@@ -35,16 +35,20 @@
     <ApplicationIcon>acrelec_icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Acrelec.Library.Logger">
+    <Reference Include="Acrelec.Library.Logger, Version=1.0.0.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Acrelec.Mockingbird.Core\Acrelec.Library.Logger.dll</HintPath>
     </Reference>
-    <Reference Include="Mockingbird.Feather, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Acrelec.Library.Pipes, Version=1.0.1.2, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Acrelec.Mockingbird.Core\Mockingbird.Feather.dll</HintPath>
+      <HintPath>..\..\..\Acrelec.Mockingbird.Core\Acrelec.Library.Pipes.dll</HintPath>
     </Reference>
-    <Reference Include="Mockingbird.Interfaces, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Mockingbird.Feather.Peripherals, Version=3.0.0.3, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Acrelec.Mockingbird.Core\Mockingbird.Interfaces.dll</HintPath>
+      <HintPath>..\..\..\Acrelec.Mockingbird.Core\Mockingbird.Feather.Peripherals.dll</HintPath>
+    </Reference>
+    <Reference Include="Mockingbird.Interfaces.Peripherals">
+      <HintPath>..\..\..\Acrelec.Mockingbird.Core\Mockingbird.Interfaces.Peripherals.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -53,6 +57,7 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Reflection.Context" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />

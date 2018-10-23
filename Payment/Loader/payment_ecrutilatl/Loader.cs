@@ -1,8 +1,8 @@
-﻿using Acrelec.Mockingbird.Feather.Peripherals.Model;
+﻿using Acrelec.Mockingbird.Feather.Peripherals.Models;
 using Acrelec.Mockingbird.Feather.Peripherals.Payment;
 using Acrelec.Mockingbird.Feather.Peripherals.Payment.Model;
-using Acrelec.Mockingbird.Feather.Settings;
-using Acrelec.Mockingbird.Interfaces;
+using Acrelec.Mockingbird.Feather.Peripherals.Settings;
+using Acrelec.Mockingbird.Interfaces.Peripherals;
 using Acrelec.Mockingbird.Payment.Contracts;
 using Acrelec.Mockingbird.Payment.ExtensionMethods;
 using Newtonsoft.Json;
@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.ServiceModel;
 using System.Threading;
+using System.Reflection;
 
 namespace Acrelec.Mockingbird.Payment
 {
@@ -26,6 +27,11 @@ namespace Acrelec.Mockingbird.Payment
         /// The factory details of the Payment including a list of settings
         /// </summary>
         private readonly Payment _currentPaymentInitConfig;
+
+        /// <summary>
+        /// Driver location for core 4 and above
+        /// </summary>
+        private string driverLocation = string.Empty;
 
         /// <summary>
         /// Object in charge of log saving
@@ -43,6 +49,9 @@ namespace Acrelec.Mockingbird.Payment
         {
             _logger = logger;
 
+            driverLocation = $@"C:\Acrelec\Core\Peripherals\Payments\Drivers\{Constants.PAYMENT_NAME}\{DriverVersion}\Driver\{Constants.DRIVER_FOLDER_NAME}";
+
+
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
             _logger.Info(Constants.LOG_FILE, $"{assembly.GetTitle()} {assembly.GetFileVersion()} [build timestamp: {assembly.GetBuildTimestamp():yyyy/MM/dd HH:mm:ss}]");
 
@@ -54,26 +63,12 @@ namespace Acrelec.Mockingbird.Payment
             _currentPaymentInitConfig = new Payment
             {
                 Id = Constants.ID,
-                PaymentName = Constants.NAME,
-                DriverFolderName = Path.GetDirectoryName(Constants.DRIVER_PATH).Split(Path.DirectorySeparatorChar).Last(),
+                PaymentName = Constants.PAYMENT_NAME,
+                DriverFolderName = Constants.DRIVER_FOLDER_NAME,
+                Type = Constants.PAYMENT_TYPE.ToString(),
                 ConfigurationSettings = new List<AdminPeripheralSetting>()
                 {
-                    //new AdminPeripheralSetting()
-                    //{
-                    //    ControlType = SettingDataType.SerialPortSelection,
-                    //    ControlName = "COM Port number",
-                    //    RealName = "Port",
-                    //    CurrentValue = "",
-                    //    ControlDescription = "Serial communication port for the EFT terminal (IPP350)"
-                    //},
-                    //new AdminPeripheralSetting()
-                    //{
-                    //    ControlType = SettingDataType.Bool,
-                    //    ControlName = "Force online transaction",
-                    //    RealName = "ForceOnline",
-                    //    CurrentValue = "False",
-                    //    ControlDescription = "Force online transaction"
-                    //},
+
                     new AdminPeripheralSetting()
                     {
                         ControlType = SettingDataType.IpAddress,
@@ -97,9 +92,9 @@ namespace Acrelec.Mockingbird.Payment
 
         public string DriverId => Constants.ID;
 
-        public string PeripheralName => Constants.NAME;
+        public string PeripheralName => Constants.PAYMENT_NAME;
 
-        public string PeripheralType => Constants.TYPE.ToString();
+        public string PeripheralType => Constants.PAYMENT_TYPE.ToString();
 
         public IPaymentCallbacks PaymentCallbacks { get; set; }
 
@@ -121,8 +116,7 @@ namespace Acrelec.Mockingbird.Payment
             {
                 try
                 {
-                    var versionInfo = FileVersionInfo.GetVersionInfo(Constants.DRIVER_PATH);
-                    return versionInfo.ProductVersion;
+                    return Assembly.GetExecutingAssembly().GetName().Version.ToString();
                 }
                 catch (Exception ex)
                 {
@@ -154,7 +148,7 @@ namespace Acrelec.Mockingbird.Payment
                 // Create communication channel
                 _logger.Info(Constants.LOG_FILE, "Creating channel factory...");
                 _channelFactory = new ChannelFactory<IPaymentService>(binding,
-                    new EndpointAddress($"net.pipe://localhost/{Constants.NAME}"));
+                    new EndpointAddress($"net.pipe://localhost/{Constants.PAYMENT_NAME}"));
 
                 var parameters = _currentPaymentInitConfig.ConfigurationSettings.ToDictionary(_ => _.RealName, _ => _.CurrentValue);
 
@@ -339,7 +333,7 @@ namespace Acrelec.Mockingbird.Payment
 
                 //Stop the payment application
                 var runningProcesses =
-                    Process.GetProcessesByName(Path.GetFileNameWithoutExtension(Constants.DRIVER_PATH));
+                    Process.GetProcessesByName(Constants.PAYMENT_APPLICATION_PROCESS_NAME);
                 foreach (var process in runningProcesses)
                 {
                     _logger.Info(Constants.LOG_FILE, "Shell driver is already running, killing it.");
@@ -385,7 +379,8 @@ namespace Acrelec.Mockingbird.Payment
         {
             _logger.Info(Constants.LOG_FILE, "LaunchDriver method started...");
             //Stop the payment application
-            var runningProcesses = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(Constants.DRIVER_PATH));
+            
+            var runningProcesses = Process.GetProcessesByName(Constants.PAYMENT_APPLICATION_PROCESS_NAME);
             foreach (var process in runningProcesses)
             {
                 _logger.Info(Constants.LOG_FILE, "Shell driver is already running, killing it.");
@@ -395,7 +390,7 @@ namespace Acrelec.Mockingbird.Payment
                 _logger.Info(Constants.LOG_FILE, "Running process exited!");
             }
 
-            _logger.Info(Constants.LOG_FILE, $"Lauching payment shell driver {Constants.DRIVER_PATH}");
+            _logger.Info(Constants.LOG_FILE, $"Lauching payment shell driver {driverLocation + "\\" + Constants.PAYMENT_APPLICATION_NAME}");
 
             //Start the application
             var startInfo = new ProcessStartInfo()
@@ -403,8 +398,8 @@ namespace Acrelec.Mockingbird.Payment
                 CreateNoWindow = false,
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = true,
-                FileName = Path.GetFileName(Constants.DRIVER_PATH),
-                WorkingDirectory = Path.GetDirectoryName(Constants.DRIVER_PATH)
+                FileName = Constants.PAYMENT_APPLICATION_NAME,
+                WorkingDirectory = driverLocation
             };
             Process.Start(startInfo);
 

@@ -16,8 +16,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Acrelec.Mockingbird.Core", "Acrelec.Mockingbird.Core", "{E9C8B966-F74A-443E-BFEE-93C6EE23F4BE}"
 	ProjectSection(SolutionItems) = preProject
 		Acrelec.Mockingbird.Core\Acrelec.Library.Logger.dll = Acrelec.Mockingbird.Core\Acrelec.Library.Logger.dll
-		Acrelec.Mockingbird.Core\Mockingbird.Feather.dll = Acrelec.Mockingbird.Core\Mockingbird.Feather.dll
-		Acrelec.Mockingbird.Core\Mockingbird.Interfaces.dll = Acrelec.Mockingbird.Core\Mockingbird.Interfaces.dll
+		Acrelec.Mockingbird.Core\Acrelec.Library.Pipes.dll = Acrelec.Mockingbird.Core\Acrelec.Library.Pipes.dll
+		Acrelec.Mockingbird.Core\Mockingbird.Feather.Peripherals.dll = Acrelec.Mockingbird.Core\Mockingbird.Feather.Peripherals.dll
+		Acrelec.Mockingbird.Core\Mockingbird.Interfaces.Peripherals.dll = Acrelec.Mockingbird.Core\Mockingbird.Interfaces.Peripherals.dll
 		Acrelec.Mockingbird.Core\Newtonsoft.Json.dll = Acrelec.Mockingbird.Core\Newtonsoft.Json.dll
 	EndProjectSection
 EndProject
