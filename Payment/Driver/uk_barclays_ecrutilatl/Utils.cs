@@ -255,7 +255,10 @@ namespace Acrelec.Mockingbird.Payment
                 case 5: { result = "Authorizing"; } break;
                 case 6: { result = "Completion"; } break;
                 case 7: { result = "Cancelled"; } break;
-                default: { result = "Error"; } break;
+                case 8: { result = "Cardholder Selecting Currency"; } break;
+                case 9: { result = "Refer to Payment Device"; } break;
+                case 10: {result = "DCC refund Cardholder Confirm"; } break;
+                default: {result = "Error"; } break;
             }
 
             return result;

@@ -257,7 +257,7 @@ namespace Acrelec.Mockingbird.Payment
 
                 //get the reponse details for the ticket
                 customerReceipt.Append($"\nCUSTOMER RECEIPT\n");
-                customerReceipt.Append($"================\n\n");
+                customerReceipt.Append($"________________\n\n");
                 customerReceipt.Append($"MERCHANT NAME:  {result.MerchantName}\n");         
                 customerReceipt.Append($"MERCHANT ADDR1: {result.MerchantAddress1}\n");   
                 customerReceipt.Append($"MERCHANT ADDR2: {result.MerchantAddress2}\n");    
@@ -282,6 +282,7 @@ namespace Acrelec.Mockingbird.Payment
                 //get the reponse details for the ticket
                 merchantReceipt.Append($"\n\nMERCHANT RECEIPT\n");
                 merchantReceipt.Append($"================\n\n");
+                merchantReceipt.Append($"________________\n\n");
                 merchantReceipt.Append($"Acquirer Merchant ID: {result.AcquirerMerchantID}\n");
                 merchantReceipt.Append($"MERCHANT NAME:  {result.MerchantName}\n");
                 merchantReceipt.Append($"MERCHANT ADDR1: {result.MerchantAddress1}\n");
@@ -353,7 +354,7 @@ namespace Acrelec.Mockingbird.Payment
             //get the reponse details for the ticket
          
             ticketContent.Append($"CUSTOMER RECEIPT\n");
-            ticketContent.Append($"================\n\n");
+            ticketContent.Append($"_________________\n\n");
             ticketContent.Append($"{ticket.MerchantName}\n");         // Merchant name
             ticketContent.Append($"{ticket.MerchantAddress1}\n");     // Merchant Addr1
             ticketContent.Append($"{ticket.MerchantAddress2}\n");     // Merchant Addr2
@@ -361,7 +362,6 @@ namespace Acrelec.Mockingbird.Payment
             ticketContent.Append($"{ticket.TerminalId}\n");           // Terminal ID
             ticketContent.Append($"{ticket.CardSchemeName}\n");       // Card Schema name
             ticketContent.Append($"{ticket.AID}\n");                  // AID
-            ticketContent.Append($"{ticket.CardSchemeName}\n");       // Card Schema name
             ticketContent.Append($"{ticket.PAN}\n");                  // Pan
             ticketContent.Append($"ICC PAN.SEQ {ticket.PANSeqNum}\n");            // Pan Seq num
             ticketContent.Append($"{Utils.CardEntryMethod(ticket.EntryMethod)}\n");
@@ -372,9 +372,10 @@ namespace Acrelec.Mockingbird.Payment
             ticketContent.Append($"{Utils.CardVerification(ticket.CVM)}\n");
             ticketContent.Append("\nTHANK YOU\n");
             ticketContent.Append($"{ticket.HostMessage}\n");          // Host Message
-            ticketContent.Append("\n***********************\n");
+            ticketContent.Append("\n_______________________\n");
             ticketContent.Append($"{Utils.DiagTxnStatus(ticket.TransactionStatus)}\n");
-            ticketContent.Append("***********************\n");
+            ticketContent.Append("\n_______________________\n");
+
 
             try
             {
