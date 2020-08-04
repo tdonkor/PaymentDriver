@@ -82,17 +82,6 @@
   <ItemGroup>
     <Content Include="acrelec_icon.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="ECRUtilATLLib">
-      <Guid>{846726CA-5096-4E7E-877C-EF56FC2E42DE}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.

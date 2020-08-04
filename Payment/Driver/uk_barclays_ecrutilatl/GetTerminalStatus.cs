@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Acrelec.Library.Logger;
 using ECRUtilATLLib;
 
+
 namespace Acrelec.Mockingbird.Payment
 {
     public class GetTerminalStatus

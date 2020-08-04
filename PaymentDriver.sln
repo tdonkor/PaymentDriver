@@ -24,7 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Acrelec.Mockingbird.Core", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ECRUtilATL Libraries", "ECRUtilATL Libraries", "{309D8C3D-728C-40F5-8ED5-A926E82A5394}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\Program Files\Ingenico\ECR UTIL DLL\lib\ECRUtilATL.dll = ..\..\..\..\Program Files\Ingenico\ECR UTIL DLL\lib\ECRUtilATL.dll
+		ECRUtilATL Libraries\ECRUtilATL.dll = ECRUtilATL Libraries\ECRUtilATL.dll
 	EndProjectSection
 EndProject
 Global
@@ -37,8 +37,8 @@ Global
 		{C8629D37-A577-43AE-A372-4725B1EA8BA7}.Debug|x86.Build.0 = Debug|x86
 		{C8629D37-A577-43AE-A372-4725B1EA8BA7}.Release|x86.ActiveCfg = Release|x86
 		{C8629D37-A577-43AE-A372-4725B1EA8BA7}.Release|x86.Build.0 = Release|x86
-		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Debug|x86.ActiveCfg = Debug|x86
-		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Debug|x86.Build.0 = Debug|x86
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Debug|x86.Build.0 = Debug|Any CPU
 		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Release|x86.ActiveCfg = Release|x86
 		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection

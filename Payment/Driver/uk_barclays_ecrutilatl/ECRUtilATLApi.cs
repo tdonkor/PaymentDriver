@@ -200,7 +200,7 @@ namespace Acrelec.Mockingbird.Payment
           
             transaction.MessageNumberIn = randomNum.Next(100).ToString();
             transaction.TransactionTypeIn = Utils.GetSelectedTransaction(transactionType).ToString();
-            transaction.Amount1In = amount.ToString();
+            transaction.Amount1In = amount.ToString().PadLeft(12, '0');
             transaction.Amount1LabelIn = "Amount1";
             transaction.Amount2In = "";
             transaction.Amount2LabelIn = "";
