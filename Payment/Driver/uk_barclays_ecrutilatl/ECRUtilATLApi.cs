@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Acrelec.Library.Logger;
-using Acrelec.Mockingbird.Payment.Configuration;
-using Acrelec.Mockingbird.Payment.Contracts;
 using ECRUtilATLLib;
 
 
@@ -25,8 +19,8 @@ namespace Acrelec.Mockingbird.Payment
         VoiceReferralClass checkVoiceReferral;
         Thread SignatureVerificationThread;
         Thread VoiceReferralThread;
-        SettlementClass getSettlement;
-        SettlementRequest settlementRequest;
+        //SettlementClass getSettlement;
+        //SettlementRequest settlementRequest;
 
 
         /// <summary>
@@ -162,30 +156,30 @@ namespace Acrelec.Mockingbird.Payment
         }
 
         /// <summary>
-        /// End of day report
+        /// End of day report - not used
         /// </summary>
         /// <param name="amount"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public SettlementClass EndOfDayReport()
-        {
-            Log.Info("Printing end of day report...");
+        //public SettlementClass EndOfDayReport()
+        //{
+        //    Log.Info("Printing end of day report...");
 
-            // Get Acquirer List
-            // getAcquirerList.Launch();
+        //    // Get Acquirer List
+        //    // getAcquirerList.Launch();
 
-            getSettlement = new SettlementClass();
-            settlementRequest = new SettlementRequest();
+        //    getSettlement = new SettlementClass();
+        //    settlementRequest = new SettlementRequest();
 
-            // do the settlement
-            getSettlement.AcquirerIndexIn = settlementRequest.AcquirerIndex;
-            getSettlement.SettlementParamIn = (short)settlementRequest.SettlementParameter;
-            getSettlement.DoSettlement();
+        //    // do the settlement
+        //    getSettlement.AcquirerIndexIn = settlementRequest.AcquirerIndex;
+        //    getSettlement.SettlementParamIn = (short)settlementRequest.SettlementParameter;
+        //    getSettlement.DoSettlement();
 
-            if ((ECRUtilATLErrMsg)(Convert.ToInt32(getSettlement.DiagRequestOut)) == ECRUtilATLErrMsg.OK)
-                return getSettlement;
-            else return null;
-        }
+        //    if ((ECRUtilATLErrMsg)(Convert.ToInt32(getSettlement.DiagRequestOut)) == ECRUtilATLErrMsg.OK)
+        //        return getSettlement;
+        //    else return null;
+        //}
  
 
         /// <summary>

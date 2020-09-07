@@ -5,10 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Xml.Linq;
-using System.Xml.XPath;
 using Acrelec.Mockingbird.Payment.Configuration;
-using Acrelec.Mockingbird.Payment.Contracts;
 using System.Text;
 using ECRUtilATLLib;
 
@@ -16,43 +13,43 @@ namespace Acrelec.Mockingbird.Payment.Settlement
 {
     public class SettlementWorker
     {
-        public static void OnSettlement(Action<string> fileSender)
-        {
-            Log.Info("Auto settlement has been triggered...");
+        //public static void OnSettlement(Action<string> fileSender)
+        //{
+        //    Log.Info("Auto settlement has been triggered...");
 
-            try
-            {
-                ExecuteSettlement();
+        //    try
+        //    {
+        //        ExecuteSettlement();
 
-                Log.Info("Auto settlement executed!");
+        //        Log.Info("Auto settlement executed!");
 
-                Log.Info("Ziping files...");
-                var files = GetFiles();
-                var zipPath = ZipFiles(files);
+        //        Log.Info("Ziping files...");
+        //        var files = GetFiles();
+        //        var zipPath = ZipFiles(files);
 
-                Log.Info("Sending files...");
-                fileSender(zipPath);
+        //        Log.Info("Sending files...");
+        //        fileSender(zipPath);
 
-                files.Add(zipPath, null);
+        //        files.Add(zipPath, null);
 
-                Log.Info("Removing sent files...");
-                foreach (var file in files.Keys)
-                {
-                    if (File.Exists(file))
-                    {
-                        File.Delete(file);
-                    }
-                }
+        //        Log.Info("Removing sent files...");
+        //        foreach (var file in files.Keys)
+        //        {
+        //            if (File.Exists(file))
+        //            {
+        //                File.Delete(file);
+        //            }
+        //        }
 
-                Log.Info("Auto settlement executed succesfully!");
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Could not execute auto settlement");
-                Log.Error(ex);
-                throw ex;
-            }
-        }
+        //        Log.Info("Auto settlement executed succesfully!");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Log.Error("Could not execute auto settlement");
+        //        Log.Error(ex);
+        //        throw ex;
+        //    }
+        //}
 
         private static IDictionary<string, string> GetFiles()
         {
@@ -66,27 +63,27 @@ namespace Acrelec.Mockingbird.Payment.Settlement
         }
 
 
-        private static void ExecuteSettlement()
-        {
-            using (var api = new ECRUtilATLApi())
-            {
-                var config = RuntimeConfiguration.Instance;
+        //private static void ExecuteSettlement()
+        //{
+        //    using (var api = new ECRUtilATLApi())
+        //    {
+        //        var config = RuntimeConfiguration.Instance;
 
-                api.Connect(config.IpAddress);
+        //        api.Connect(config.IpAddress);
 
-                Log.Info("Executing auto settlement...");
-                var result = api.EndOfDayReport();
-                if (result == null)
-                {
-                    Log.Info($"Error executing settlement: {result}");
-                }
-                else
-                {
-                    Log.Info("Auto settlement executed.");
-                   PersistReport(result);
-                }
-            }
-        }
+        //        Log.Info("Executing auto settlement...");
+        //        var result = api.EndOfDayReport();
+        //        if (result == null)
+        //        {
+        //            Log.Info($"Error executing settlement: {result}");
+        //        }
+        //        else
+        //        {
+        //            Log.Info("Auto settlement executed.");
+        //           PersistReport(result);
+        //        }
+        //    }
+        //}
 
         private static void PersistReport(SettlementClass report)
         {

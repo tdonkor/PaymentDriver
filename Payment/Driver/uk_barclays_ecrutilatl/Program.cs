@@ -2,7 +2,6 @@
 using Acrelec.Mockingbird.Payment.Configuration;
 using Acrelec.Mockingbird.Payment.Contracts;
 using Acrelec.Mockingbird.Payment.ExtensionMethods;
-using Acrelec.Mockingbird.Payment.Settlement;
 using System;
 using System.ServiceModel;
 using System.Threading;
@@ -27,7 +26,7 @@ namespace Acrelec.Mockingbird.Payment
 
             using (var host = new ServiceHost(typeof(PaymentService), new Uri("net.pipe://localhost")))
             using (new Heartbeat())
-            using (new SettlementListener(appConfig.SettlementTriggerPort, SettlementWorker.OnSettlement))
+          //  using (new SettlementListener(appConfig.SettlementTriggerPort, SettlementWorker.OnSettlement))
             {
                 host.AddServiceEndpoint(typeof(IPaymentService), new NetNamedPipeBinding(), NAME);
                 host.Open();
