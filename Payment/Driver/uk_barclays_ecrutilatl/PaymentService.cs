@@ -367,7 +367,7 @@ namespace Acrelec.Mockingbird.Payment
             ticketContent.Append("\n\tTHANK YOU\n");
             ticketContent.Append($"\t{ticket.HostMessage}\n");          // Host Message
             ticketContent.Append("\n\t***********************\n");
-            ticketContent.Append($"\t\t{Utils.DiagTxnStatus(ticket.TransactionStatus)}\n");
+            ticketContent.Append($"\t{Utils.DiagTxnStatus(ticket.TransactionStatus)}\n");
             ticketContent.Append("\t***********************\n");
 
 
